@@ -24,13 +24,6 @@ suggestions:
 			[]
 
 parameters :
-    ws :
-        ui-name : |
-            Workspace Name/ID
-        short-hint : |
-            Workspace Name or ID
-        long-hint  : |
-            Workspace Name or ID.  Should include all input data, and will be used to store your results.
     read_type :
 	ui-name : |
 	    Read Library Type
