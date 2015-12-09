@@ -34,52 +34,52 @@ parameters:
 	input_read_library :
 		  ui-name : |
 		  	  Read Library Object
-	short-hint : |
-	    Reads from pooled barcode mutants
-	long-hint  : |
-	    The set of reads from the barcode mutant pool that you want to map to the input genome.
-    input_genome :
-	ui-name : |
-	    Genome object
-	short-hint : |
-	    Genome to map barcode reads to
-	long-hint  : |
-	    The genome of the organism that was subjected to transposon mutagenesis, that you want the reads mapped to.
-    sequenced_at :
-	ui-name : |
-	    Sequencing facility
-	short-hint : |
-	    Where were the reads sequenced?
-	long-hint  : |
-	    The name of the facility/machine/person where the barcode reads were sequenced.
-    start_date :
-	ui-name : |
-	    Date reads were sequenced
-	short-hint : |
-	    Date reads were sequenced
-	long-hint  : |
-	    Date (or start date) on which reads were sequenced, in YYYY-MM-DD format.
-    output_pool :
-	ui-name : |
-	    Output Pool
-	short-hint : |
-	    Pool object created by this method
-	long-hint  : |
-	    This method will create a Pool object indicating where all the mutant strains have barcode insertions.
-    output_tnseq_experiment :
-	ui-name : |
-	    Output TnSeq experiment
-	short-hint : |
-	    TnSeq experiment object created by this method
-	long-hint  : |
-	    This method will create a TnSeq experiment object indicating the usable strains in the pool.
-    output_tnseq_library :
-	ui-name : |
-	    Output TnSeq library
-	short-hint : |
-	    TnSeq library object created by this method
-	long-hint  : |
-	    This method will create a TnSeq library object that includes the starting counts for all barcoded mutant strains in the TnSeq experiment.
+	   	  short-hint : |
+		  	  Reads from pooled barcode mutants
+		  long-hint  : |
+		  	  The set of reads from the barcode mutant pool that you want to map to the input genome.
+	input_genome :
+		  ui-name : |
+		  	  Genome object
+		  short-hint : |
+		  	  Genome to map barcode reads to
+		  long-hint  : |
+		  	  The genome of the organism that was subjected to transposon mutagenesis, that you want the reads mapped to.
+	sequenced_at :
+		  ui-name : |
+		  	  Sequencing facility
+		  short-hint : |
+		  	  Where were the reads sequenced?
+		  long-hint  : |
+		  	  The name of the facility/machine/person where the barcode reads were sequenced.
+	start_date :
+		ui-name : |
+			Date reads were sequenced
+		short-hint : |
+			Date reads were sequenced
+	  	long-hint  : |
+			Date (or start date) on which reads were sequenced, in YYYY-MM-DD format.
+	output_pool :
+		ui-name : |
+			Output Pool
+		short-hint : |
+			Pool object created by this method
+		long-hint  : |
+			This method will create a Pool object indicating where all the mutant strains have barcode insertions.
+        output_tnseq_experiment :
+		ui-name :
+			Output TnSeq experiment
+		short-hint : |
+			TnSeq experiment object created by this method
+		long-hint  : |
+			This method will create a TnSeq experiment object indicating the usable strains in the pool.
+	output_tnseq_library :
+		ui-name :
+			Output TnSeq library
+		short-hint : |
+			TnSeq library object created by this method
+		long-hint  : |
+			This method will create a TnSeq library object that includes the starting counts for all barcoded mutant strains in the TnSeq experiment.
 
 description : |
 	<p>This method runs Morgan Price's FEBA pipeline for TnSeq processing, mapping barcode reads to a genome and creating a mutant library to use in BarSeq experiments</p>
