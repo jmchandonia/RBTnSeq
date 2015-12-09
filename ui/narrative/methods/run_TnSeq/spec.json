@@ -102,6 +102,7 @@
 	],    
 	"behavior": {
 		"service-mapping": {
+			"url": "",
 			"name": "RBTnSeq",
 			"method": "run_TnSeq",
 			"input_mapping": [
