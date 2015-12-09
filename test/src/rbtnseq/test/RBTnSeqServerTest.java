@@ -13,8 +13,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import rbtnseq.CountContigsResults;
-import rbtnseq.RBTnSeqServer;
+import rbtnseq.*;
 import us.kbase.auth.AuthToken;
 import us.kbase.common.service.JsonServerSyslog;
 import us.kbase.common.service.UObject;
@@ -65,6 +64,13 @@ public class RBTnSeqServerTest {
                 ex.printStackTrace();
             }
         }
+    }
+
+    @Test
+    public void testTnSeq() throws Exception {
+	TnSeqInput input = new TnSeqInput();
+        String rv = impl.runTnSeq(input, token);
+        Assert.assertEquals("method worked!", rv);
     }
 
     /*    

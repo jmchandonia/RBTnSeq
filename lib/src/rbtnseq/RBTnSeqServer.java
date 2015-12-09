@@ -50,6 +50,7 @@ public class RBTnSeqServer extends JsonServerServlet {
     public String runTnSeq(TnSeqInput inputParams, AuthToken authPart, RpcContext... jsonRpcContext) throws Exception {
         String returnVal = null;
         //BEGIN runTnSeq
+	returnVal = "method worked!";
         //END runTnSeq
         return returnVal;
     }
