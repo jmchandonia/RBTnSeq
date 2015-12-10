@@ -25,7 +25,6 @@ compile:
 		--plclname $(SERVICE_CAPS)::$(SERVICE_CAPS)Client \
 		--jsclname javascript/Client \
 		--pyclname $(SERVICE_CAPS).$(SERVICE_CAPS)Client \
-		--rclname $(SERVICE_CAPS)/$(SERVICE_CAPS)Client \
 		--javasrc src \
 		--java \
 		--javasrv \
