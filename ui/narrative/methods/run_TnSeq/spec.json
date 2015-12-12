@@ -104,7 +104,7 @@
 		"service-mapping": {
 			"url": "",
 			"name": "RBTnSeq",
-			"method": "run_TnSeq",
+			"method": "runTnSeq",
 			"input_mapping": [
 				{
 					"narrative_system_variable": "workspace",
