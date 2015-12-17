@@ -66,6 +66,16 @@ public class RBTnSeqServerTest {
         }
     }
 
+    /**
+       check that we can read version
+    */
+    @Test
+    public void getVersion() throws Exception {
+        String version = impl.version();
+        System.out.println("service version is "+version);
+        Assert.assertNotNull(version);
+    }
+
     /*
     @Test
     public void testTnSeq() throws Exception {

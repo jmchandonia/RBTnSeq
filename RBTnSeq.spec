@@ -22,4 +22,7 @@ module RBTnSeq {
 
 	/* runs TnSeq part of pipeline */
 	funcdef runTnSeq(TnSeqInput input_params) returns (string report) authentication required;
+
+       /* returns version number of service */
+       funcdef version() returns (string version);
 };

@@ -157,4 +157,20 @@ public class RBTnSeqClient {
         List<String> res = caller.jsonrpcCall("RBTnSeq.runTnSeq", args, retType, true, true, jsonRpcContext);
         return res.get(0);
     }
+
+    /**
+     * <p>Original spec-file function name: version</p>
+     * <pre>
+     * returns version number of service
+     * </pre>
+     * @return   parameter "version" of String
+     * @throws IOException if an IO exception occurs
+     * @throws JsonClientException if a JSON RPC exception occurs
+     */
+    public String version(RpcContext... jsonRpcContext) throws IOException, JsonClientException {
+        List<Object> args = new ArrayList<Object>();
+        TypeReference<List<String>> retType = new TypeReference<List<String>>() {};
+        List<String> res = caller.jsonrpcCall("RBTnSeq.version", args, retType, true, false, jsonRpcContext);
+        return res.get(0);
+    }
 }

@@ -55,6 +55,22 @@ public class RBTnSeqServer extends JsonServerServlet {
         return returnVal;
     }
 
+    /**
+     * <p>Original spec-file function name: version</p>
+     * <pre>
+     * returns version number of service
+     * </pre>
+     * @return   parameter "version" of String
+     */
+    @JsonServerMethod(rpc = "RBTnSeq.version", async=true)
+    public String version(RpcContext... jsonRpcContext) throws Exception {
+        String returnVal = null;
+        //BEGIN version
+        returnVal = "RBTnSeq-0."+serialVersionUID;
+        //END version
+        return returnVal;
+    }
+
     public static void main(String[] args) throws Exception {
         if (args.length == 1) {
             new RBTnSeqServer().startupServer(Integer.parseInt(args[0]));

@@ -177,4 +177,11 @@ class RBTnSeq(object):
         resp = self._call('RBTnSeq.runTnSeq',
                           [input_params], json_rpc_context)
         return resp[0]
+  
+    def version(self, json_rpc_context = None):
+        if json_rpc_context and type(json_rpc_context) is not dict:
+            raise ValueError('Method version: argument json_rpc_context is not type dict as required.')
+        resp = self._call('RBTnSeq.version',
+                          [], json_rpc_context)
+        return resp[0]
  
