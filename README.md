@@ -3,4 +3,5 @@
 # RBTnSeq
 ---
 
-This is the basic readme for this module. This module contains an example method that counts the contigs in a contig set.
+This module wraps Morgan Price's RBTnSeq pipeline,
+available from https://bitbucket.org/berkeleylab/feba

@@ -24,7 +24,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @Generated("com.googlecode.jsonschema2pojo")
 @JsonPropertyOrder({
     "ws",
-    "read_type",
     "input_read_library",
     "input_genome",
     "sequenced_at",
@@ -37,8 +36,6 @@ public class TnSeqInput {
 
     @JsonProperty("ws")
     private String ws;
-    @JsonProperty("read_type")
-    private String readType;
     @JsonProperty("input_read_library")
     private String inputReadLibrary;
     @JsonProperty("input_genome")
@@ -67,21 +64,6 @@ public class TnSeqInput {
 
     public TnSeqInput withWs(String ws) {
         this.ws = ws;
-        return this;
-    }
-
-    @JsonProperty("read_type")
-    public String getReadType() {
-        return readType;
-    }
-
-    @JsonProperty("read_type")
-    public void setReadType(String readType) {
-        this.readType = readType;
-    }
-
-    public TnSeqInput withReadType(String readType) {
-        this.readType = readType;
         return this;
     }
 
@@ -202,7 +184,7 @@ public class TnSeqInput {
 
     @Override
     public String toString() {
-        return ((((((((((((((((((((("TnSeqInput"+" [ws=")+ ws)+", readType=")+ readType)+", inputReadLibrary=")+ inputReadLibrary)+", inputGenome=")+ inputGenome)+", sequencedAt=")+ sequencedAt)+", startDate=")+ startDate)+", outputPool=")+ outputPool)+", outputTnseqExperiment=")+ outputTnseqExperiment)+", outputTnseqLibrary=")+ outputTnseqLibrary)+", additionalProperties=")+ additionalProperties)+"]");
+        return ((((((((((((((((((("TnSeqInput"+" [ws=")+ ws)+", inputReadLibrary=")+ inputReadLibrary)+", inputGenome=")+ inputGenome)+", sequencedAt=")+ sequencedAt)+", startDate=")+ startDate)+", outputPool=")+ outputPool)+", outputTnseqExperiment=")+ outputTnseqExperiment)+", outputTnseqLibrary=")+ outputTnseqLibrary)+", additionalProperties=")+ additionalProperties)+"]");
     }
 
 }

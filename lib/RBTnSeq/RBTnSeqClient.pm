@@ -126,7 +126,6 @@ $input_params is a RBTnSeq.TnSeqInput
 $report is a string
 TnSeqInput is a reference to a hash where the following keys are defined:
 	ws has a value which is a string
-	read_type has a value which is a string
 	input_read_library has a value which is a string
 	input_genome has a value which is a string
 	sequenced_at has a value which is a string
@@ -145,7 +144,6 @@ $input_params is a RBTnSeq.TnSeqInput
 $report is a string
 TnSeqInput is a reference to a hash where the following keys are defined:
 	ws has a value which is a string
-	read_type has a value which is a string
 	input_read_library has a value which is a string
 	input_genome has a value which is a string
 	sequenced_at has a value which is a string
@@ -289,7 +287,6 @@ update of some KBaseRBTnSeq objects
 <pre>
 a reference to a hash where the following keys are defined:
 ws has a value which is a string
-read_type has a value which is a string
 input_read_library has a value which is a string
 input_genome has a value which is a string
 sequenced_at has a value which is a string
@@ -306,7 +303,6 @@ output_tnseq_library has a value which is a string
 
 a reference to a hash where the following keys are defined:
 ws has a value which is a string
-read_type has a value which is a string
 input_read_library has a value which is a string
 input_genome has a value which is a string
 sequenced_at has a value which is a string

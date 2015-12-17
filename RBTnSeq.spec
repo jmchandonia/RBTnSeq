@@ -10,7 +10,6 @@ module RBTnSeq {
            update of some KBaseRBTnSeq objects */
 	typedef structure {
 	    string ws;
-            string read_type;
             string input_read_library;
             string input_genome;
             string sequenced_at;

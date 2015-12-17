@@ -24,20 +24,13 @@ suggestions:
       []
 
 parameters:
-  read_type :
-    ui-name : |
-      Read Library Type
-    short-hint : |
-      Library type, paired end or single end sequencing
-    long-hint : |
-      Library type, paired end or single end sequencing
   input_read_library :
     ui-name : |
       Read Library Object
     short-hint : |
       Reads from pooled barcode mutants
     long-hint  : |
-      The set of reads from the barcode mutant pool that you want to map to the input genome.
+      The set of reads from the barcode mutant pool that you want to map to the input genome. Reads should be single end.
   input_genome :
     ui-name : |
       Genome object
