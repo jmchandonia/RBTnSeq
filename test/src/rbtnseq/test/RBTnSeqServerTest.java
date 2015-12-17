@@ -66,12 +66,14 @@ public class RBTnSeqServerTest {
         }
     }
 
+    /*
     @Test
     public void testTnSeq() throws Exception {
 	TnSeqInput input = new TnSeqInput();
         String rv = impl.runTnSeq(input, token);
         Assert.assertEquals("method worked!", rv);
     }
+    */
 
     /*    
     @Test
