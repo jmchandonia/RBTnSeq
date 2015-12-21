@@ -47,7 +47,7 @@ public class RBTnSeqServer extends JsonServerServlet {
      * @return   parameter "report" of String
      */
     @JsonServerMethod(rpc = "RBTnSeq.runTnSeq", async=true)
-    public String runTnSeq(TnSeqInput inputParams, AuthToken authPart, RpcContext... jsonRpcContext) throws Exception {
+    public String runTnSeq(TnSeqInput inputParams, AuthToken authPart, RpcContext jsonRpcContext) throws Exception {
         String returnVal = null;
         //BEGIN runTnSeq
         returnVal = TnSeq.run(wsUrl,authPart,inputParams);
@@ -63,7 +63,7 @@ public class RBTnSeqServer extends JsonServerServlet {
      * @return   parameter "version" of String
      */
     @JsonServerMethod(rpc = "RBTnSeq.version", async=true)
-    public String version(RpcContext... jsonRpcContext) throws Exception {
+    public String version(RpcContext jsonRpcContext) throws Exception {
         String returnVal = null;
         //BEGIN version
         returnVal = "RBTnSeq-0."+serialVersionUID;

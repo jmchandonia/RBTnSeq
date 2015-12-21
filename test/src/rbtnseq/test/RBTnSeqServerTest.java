@@ -23,6 +23,8 @@ import us.kbase.workspace.SaveObjectsParams;
 import us.kbase.workspace.WorkspaceClient;
 import us.kbase.workspace.WorkspaceIdentity;
 
+import us.kbase.common.service.RpcContext;
+
 public class RBTnSeqServerTest {
     private static AuthToken token = null;
     private static Map<String, String> config = null;
@@ -71,7 +73,7 @@ public class RBTnSeqServerTest {
     */
     @Test
     public void getVersion() throws Exception {
-        String version = impl.version();
+        String version = impl.version((RpcContext)null);
         System.out.println("service version is "+version);
         Assert.assertNotNull(version);
     }
@@ -79,9 +81,9 @@ public class RBTnSeqServerTest {
     /*
     @Test
     public void testTnSeq() throws Exception {
-	TnSeqInput input = new TnSeqInput();
-        String rv = impl.runTnSeq(input, token);
-        Assert.assertEquals("method worked!", rv);
+        TnSeqInput input = new TnSeqInput();
+        String rv = impl.runTnSeq(input, token, null);
+        Assert.assertNotNull(rv);
     }
     */
 
