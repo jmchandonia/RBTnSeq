@@ -120,25 +120,30 @@ public class TnSeq {
             if (contigs==null)
                 throw new Exception("No contig IDs defined for this genome");
             int nContigs = contigs.size();
+            HashMap<String,Integer> contigMap = new HashMap<String,Integer>();
             for (int i=0; i<nContigs; i++) {
                 String contigID = contigs.get(i);
                 String seq = contigSeqs.get(contigID);
                 fw.write(""+i, seq);
+                contigMap.put(contigID, new Integer(i));
             }
             fw.close();
 
             // aaseq = protein seq for each feature
+            // genes.tab = location and description of features
+            // genes.GC = same but with 2 extra cols for GC content
             fw = new FastaWriter(new File(genomeDir+"/aaseq"));
+            PrintWriter tabWriter = new PrintWriter(new File(genomeDir+"/genes.tab"));
+            tabWriter.println("locusId\tsysName\ttype\tscaffoldId\tbegin\tend\tstrand\tname\tdesc");
+            PrintWriter gcWriter = new PrintWriter(new File(genomeDir+"/genes.GC"));
+            gcWriter.println("locusId\tsysName\ttype\tscaffoldId\tbegin\tend\tstrand\tname\tdesc\tGC\tnTA");
             List<Feature> features = genome.getFeatures();
             if (features==null)
                 throw new Exception("No features defined for this genome");
             int nFeatures = features.size();
-            int protCount = 0;
+            int geneCount = 0;
             for (int i=0; i<nFeatures; i++) {
                 Feature feat = features.get(i);
-                String seq = feat.getProteinTranslation();
-                if ((seq == null) || (seq.isEmpty()))
-                    continue;
                 if (feat.getLocation().size() < 1)
                     continue;
                 Tuple4<String, Long, String, Long> loc = feat.getLocation().get(0);
@@ -147,13 +152,46 @@ public class TnSeq {
                 if ((contigID==null) || (featID==null))
                     continue;
 
-                // we have a real protein
+                // get other info about gene
+                String alias = "";
+                List<String> aliases = feat.getAliases();
+                if ((aliases != null) && (aliases.size() > 0))
+                    alias = aliases.get(0);
+                Integer contigNum = contigMap.get(contigID);
+                int type = 0;
+                String featType = feat.getType();
+                if (featType != null) {
+                    if (featType.equals("CDS"))
+                        type = 1;
+                    else if (featType.equals("rna"))
+                        type = 5;
+                }
+                if (type==0) {
+                    throw new Exception("Unknown feature type "+featType);
+                }
+                Long begin = loc.getE2();
+                Long end = loc.getE2()+loc.getE4();
+                String strand = loc.getE3();
+                String desc = feat.getFunction();
+                if (desc==null)
+                    desc = "";
+
+                // we have a called gene
+                geneCount++;                    
+                tabWriter.println(i+"\t"+alias+"\t"+type+"\t"+contigNum+"\t"+begin+"\t"+end+"\t"+strand+"\t"+alias+"\t"+desc);
+                tabWriter.println(i+"\t"+alias+"\t"+type+"\t"+contigNum+"\t"+begin+"\t"+end+"\t"+strand+"\t"+alias+"\t"+desc);
+                
+                geneCount++;
+
+                String seq = feat.getProteinTranslation();
+                if ((seq == null) || (seq.isEmpty()))
+                    continue;
+                // we have a protein
                 fw.write(""+i, seq);
-                protCount++;
             }
             fw.close();
-            if (protCount==0)
-                throw new Exception("No proteins called for this genome");
+            if (geneCount==0)
+                throw new Exception("No genes called for this genome");
         }
         catch (Exception e) {
             System.out.println(e.getMessage());
