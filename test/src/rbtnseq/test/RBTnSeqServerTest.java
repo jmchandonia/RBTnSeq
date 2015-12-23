@@ -78,14 +78,23 @@ public class RBTnSeqServerTest {
         Assert.assertNotNull(version);
     }
 
-    /*
+    /**
+       test tnseq with some D. vulgaris reads data
+    */
     @Test
     public void testTnSeq() throws Exception {
-        TnSeqInput input = new TnSeqInput();
+        TnSeqInput input = new TnSeqInput()
+            .withWs("3262")
+            .withInputReadLibrary("GBVT06H_reads")
+            .withInputGenome("kb|g.3562")
+            .withSequencedAt("cornerstone.qb3.berkeley.edu")
+            .withStartDate("2015-04-21")
+            .withOutputPool("test_pool")
+            .withOutputTnseqExperiment("test_experiment")
+            .withOutputTnseqLibrary("test_library");
         String rv = impl.runTnSeq(input, token, null);
         Assert.assertNotNull(rv);
     }
-    */
 
     /*    
     @Test
