@@ -9,6 +9,7 @@ import us.kbase.auth.AuthToken;
 import us.kbase.common.service.*;
 import us.kbase.workspace.*;
 import us.kbase.kbasegenomes.*;
+import us.kbase.kbaseassembly.*;
 
 import com.fasterxml.jackson.databind.*;
 
@@ -46,10 +47,16 @@ public class TnSeq {
         WorkspaceClient wc = createWsClient(wsURL,token);
         ObjectMapper mapper = new ObjectMapper();
 
-        Object reads = wc.getObjects(Arrays.asList(new ObjectIdentity().withRef(ws+"/"+readsRef))).get(0).getData();
-            
         File fastQFile = File.createTempFile("reads", ".fastq.gz", tempDir);
         fastQFile.delete();
+
+        try {
+            us.kbase.kbaseassembly.SingleEndLibrary kasl = wc.getObjects(Arrays.asList(new ObjectIdentity().withRef(ws+"/"+readsRef))).get(0).getData().asClassInstance(us.kbase.kbaseassembly.SingleEndLibrary.class);
+            System.out.println("read single-end library as assembly object");
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
 
         return fastQFile;
     }
