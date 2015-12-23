@@ -71,6 +71,7 @@ public class TnSeq {
             pb.start().waitFor();
         }
         catch (Exception e) {
+            System.out.println(e.getMessage());
             System.out.println("Error reading single-end library as assembly object");
             // should try to read as KBaseFile.SingleEndLibrary here
             e.printStackTrace();
@@ -94,7 +95,7 @@ public class TnSeq {
         WorkspaceClient wc = createWsClient(wsURL,token);
         ObjectMapper mapper = new ObjectMapper();
 
-        File genomeDir = File.createTempFile("g", "", tempDir);
+        File genomeDir = File.createTempFile("genome", "", tempDir);
         genomeDir.delete();
         genomeDir.mkdir();
 
@@ -155,6 +156,7 @@ public class TnSeq {
                 throw new Exception("No proteins called for this genome");
         }
         catch (Exception e) {
+            System.out.println(e.getMessage());
             System.out.println("Error reading genome");
             e.printStackTrace();
             genomeDir = null;
@@ -174,6 +176,11 @@ public class TnSeq {
                                           tempDir,
                                           inputParams.getWs(),
                                           inputParams.getInputReadLibrary());
-        return "reads file made: "+readsFile.getAbsolutePath();
+        File genomeDir = dumpGenomeTab(wsURL,
+                                       token,
+                                       tempDir,
+                                       inputParams.getWs(),
+                                       inputParams.getInputGenome());
+        return "reads file: "+readsFile.getAbsolutePath()+", genome dir: "+genomeDir.getAbsolutePath();
     }
 }
