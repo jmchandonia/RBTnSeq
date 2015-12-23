@@ -10,6 +10,7 @@ import us.kbase.common.service.*;
 import us.kbase.workspace.*;
 import us.kbase.kbasegenomes.*;
 import us.kbase.kbaseassembly.*;
+import us.kbase.common.utils.FastaWriter;
 
 import com.fasterxml.jackson.databind.*;
 
@@ -113,6 +114,7 @@ public class TnSeq {
             cs = null;
 
             // genome.fna = nucleic acid seq for each contig
+            FastaWriter fw = new FastaWriter(new File(genomeDir+"/genome.fna"));
             List<String> contigs = genome.getContigIds();
             if (contigs==null)
                 throw new Exception("No contig IDs defined for this genome");
@@ -120,8 +122,37 @@ public class TnSeq {
             for (int i=0; i<nContigs; i++) {
                 String contigID = contigs.get(i);
                 String seq = contigSeqs.get(contigID);
+                fw.write(""+i, seq);
             }
-            
+            fw.close();
+
+            // aaseq = protein seq for each feature
+            fw = new FastaWriter(new File(genomeDir+"/aaseq"));
+            List<Feature> features = genome.getFeatures();
+            if (features==null)
+                throw new Exception("No features defined for this genome");
+            int nFeatures = features.size();
+            int protCount = 0;
+            for (int i=0; i<nFeatures; i++) {
+                Feature feat = features.get(i);
+                String seq = feat.getProteinTranslation();
+                if ((seq == null) || (seq.isEmpty()))
+                    continue;
+                if (feat.getLocation().size() < 1)
+                    continue;
+                Tuple4<String, Long, String, Long> loc = feat.getLocation().get(0);
+                String contigID = loc.getE1();
+                String featID = feat.getId();
+                if ((contigID==null) || (featID==null))
+                    continue;
+
+                // we have a real protein
+                fw.write(""+i, seq);
+                protCount++;
+            }
+            fw.close();
+            if (protCount==0)
+                throw new Exception("No proteins called for this genome");
         }
         catch (Exception e) {
             System.out.println("Error reading genome");
