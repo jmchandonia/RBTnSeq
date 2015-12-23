@@ -13,6 +13,8 @@ import us.kbase.kbaseassembly.*;
 
 import com.fasterxml.jackson.databind.*;
 
+import static java.lang.ProcessBuilder.Redirect;
+
 /**
    This class runs TnSeq, which maps reads to a genome
 */
@@ -53,6 +55,20 @@ public class TnSeq {
         try {
             us.kbase.kbaseassembly.SingleEndLibrary kasl = wc.getObjects(Arrays.asList(new ObjectIdentity().withRef(ws+"/"+readsRef))).get(0).getData().asClassInstance(us.kbase.kbaseassembly.SingleEndLibrary.class);
             System.out.println("read single-end library as assembly object");
+            Handle h = kasl.getHandle();
+            String url = h.getUrl()+"/node/"+h.getId()+"?download";
+
+            // needs authenticated shock download
+            ProcessBuilder pb =
+                new ProcessBuilder("curl",
+                                   "-k",
+                                   "-X",
+                                   "GET",
+                                   url,
+                                   "-H",
+                                   "\"Authorization: OAuth "+token.toString()+"\"");
+            pb.redirectOutput(Redirect.to(fastQFile));
+            pb.start().waitFor();
         }
         catch (Exception e) {
             e.printStackTrace();

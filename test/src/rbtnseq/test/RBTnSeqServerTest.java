@@ -92,7 +92,8 @@ public class RBTnSeqServerTest {
             .withOutputPool("test_pool")
             .withOutputTnseqExperiment("test_experiment")
             .withOutputTnseqLibrary("test_library");
-        String rv = impl.runTnSeq(input, token, null);
+        String rv = impl.runTnSeq(input, token, (RpcContext)null);
+        System.out.println("tnseq test returned "+rv);
         Assert.assertNotNull(rv);
     }
 
