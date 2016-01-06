@@ -67,6 +67,13 @@ public class TnSeq {
                                    url,
                                    "-H",
                                    "\"Authorization: OAuth "+token.toString()+"\"");
+            System.out.println("debug: curl "+
+                               "-k "+
+                               "-X "+
+                               "GET "+
+                               url+
+                               " -H "+
+                               "\"Authorization: OAuth "+token.toString()+"\"");
             pb.redirectOutput(Redirect.to(fastQFile));
             pb.start().waitFor();
         }
@@ -81,7 +88,6 @@ public class TnSeq {
 
         return fastQFile;
     }
-
 
     /**
        dumps a Genome object out in FEBA directory format; returns
@@ -100,15 +106,19 @@ public class TnSeq {
         genomeDir.mkdir();
 
         try {
-            Genome genome = wc.getObjects(Arrays.asList(new ObjectIdentity().withRef(ws+"/"+genomeRef))).get(0).getData().asClassInstance(Genome.class);
+            // first get genome object
+            List<ObjectIdentity> objects = new ArrayList<ObjectIdentity>();
+            objects.add(new ObjectIdentity().withRef(ws+"/"+genomeRef));
+            Genome genome = wc.getObjects(objects).get(0).getData().asClassInstance(Genome.class);
             if (genome==null)
                 throw new Exception("Null return error reading genome");
 
-            // make sure we can read contigset also:
+            // get associated contigset
             String contigsetRef = genome.getContigsetRef();
             if (contigsetRef == null)
                 throw new Exception("ContigSet not defined for this genome");
-            ContigSet cs = wc.getObjects(Arrays.asList(new ObjectIdentity().withRef(contigsetRef))).get(0).getData().asClassInstance(ContigSet.class);
+            objects.add(new ObjectIdentity().withRef(contigsetRef));
+            ContigSet cs = wc.getReferencedObjects(Arrays.asList(objects)).get(0).getData().asClassInstance(ContigSet.class);
             HashMap<String,String> contigSeqs = new HashMap<String,String>();
             for (Contig c : cs.getContigs())
                 contigSeqs.put(c.getId(),c.getSequence());
@@ -124,19 +134,16 @@ public class TnSeq {
             for (int i=0; i<nContigs; i++) {
                 String contigID = contigs.get(i);
                 String seq = contigSeqs.get(contigID);
-                fw.write(""+i, seq);
+                fw.write(""+i, seq.toUpperCase());
                 contigMap.put(contigID, new Integer(i));
             }
             fw.close();
 
             // aaseq = protein seq for each feature
             // genes.tab = location and description of features
-            // genes.GC = same but with 2 extra cols for GC content
             fw = new FastaWriter(new File(genomeDir+"/aaseq"));
             PrintWriter tabWriter = new PrintWriter(new File(genomeDir+"/genes.tab"));
             tabWriter.println("locusId\tsysName\ttype\tscaffoldId\tbegin\tend\tstrand\tname\tdesc");
-            PrintWriter gcWriter = new PrintWriter(new File(genomeDir+"/genes.GC"));
-            gcWriter.println("locusId\tsysName\ttype\tscaffoldId\tbegin\tend\tstrand\tname\tdesc\tGC\tnTA");
             List<Feature> features = genome.getFeatures();
             if (features==null)
                 throw new Exception("No features defined for this genome");
@@ -166,27 +173,34 @@ public class TnSeq {
                     else if (featType.equals("rna"))
                         type = 5;
                 }
-                if (type==0) {
+                if (type==0)
                     throw new Exception("Unknown feature type "+featType);
-                }
+
                 Long begin = loc.getE2();
-                Long end = loc.getE2()+loc.getE4();
+                Long length = loc.getE4();
                 String strand = loc.getE3();
+                Long end = begin+(length-1);
+                if (strand.equals("-")) {
+                    begin -= (length-1);
+                    end -= (length-1);
+                }
                 String desc = feat.getFunction();
                 if (desc==null)
                     desc = "";
 
+                // only list features with sequence
+                String seq = feat.getDnaSequence();
+                if ((seq==null) || (seq.length()==0))
+                    continue;
+
                 // we have a called gene
                 geneCount++;                    
                 tabWriter.println(i+"\t"+alias+"\t"+type+"\t"+contigNum+"\t"+begin+"\t"+end+"\t"+strand+"\t"+alias+"\t"+desc);
-                tabWriter.println(i+"\t"+alias+"\t"+type+"\t"+contigNum+"\t"+begin+"\t"+end+"\t"+strand+"\t"+alias+"\t"+desc);
-                
-                geneCount++;
 
-                String seq = feat.getProteinTranslation();
+                // see if feature is a protein.  If so, add to aaseq.
+                seq = feat.getProteinTranslation();
                 if ((seq == null) || (seq.isEmpty()))
                     continue;
-                // we have a protein
                 fw.write(""+i, seq);
             }
             fw.close();
