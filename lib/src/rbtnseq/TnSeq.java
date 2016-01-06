@@ -66,7 +66,7 @@ public class TnSeq {
                                    "GET",
                                    url,
                                    "-H",
-                                   "\"Authorization: OAuth "+token.toString()+"\"");
+                                   "Authorization: OAuth "+token.toString());
             System.out.println("debug: curl "+
                                "-k "+
                                "-X "+
