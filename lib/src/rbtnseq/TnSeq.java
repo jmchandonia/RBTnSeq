@@ -67,13 +67,6 @@ public class TnSeq {
                                    url,
                                    "-H",
                                    "Authorization: OAuth "+token.toString());
-            System.out.println("debug: curl "+
-                               "-k "+
-                               "-X "+
-                               "GET "+
-                               url+
-                               " -H "+
-                               "\"Authorization: OAuth "+token.toString()+"\"");
             pb.redirectOutput(Redirect.to(fastQFile));
             pb.start().waitFor();
         }
