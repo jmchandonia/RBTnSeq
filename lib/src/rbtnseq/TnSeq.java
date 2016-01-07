@@ -39,7 +39,7 @@ public class TnSeq {
     }
 
     /**
-       dumps a (single end) reads object out in fastQ format.  
+       dumps a (single end) reads object out in fastQ.gz format.  
     */
     public static File dumpSEReadsFASTQ(String wsURL,
                                         AuthToken token,
@@ -60,13 +60,9 @@ public class TnSeq {
 
             // needs authenticated shock download
             ProcessBuilder pb =
-                new ProcessBuilder("curl",
-                                   "-k",
-                                   "-X",
-                                   "GET",
-                                   url,
-                                   "-H",
-                                   "Authorization: OAuth "+token.toString());
+                new ProcessBuilder("/bin/bash",
+                                   "-c",
+                                   "/usr/bin/curl -k -X GET "+url+" -H \"Authorization: OAuth "+token.toString()+"\" | /bin/gzip");
             pb.redirectOutput(Redirect.to(fastQFile));
             pb.start().waitFor();
         }
@@ -196,9 +192,19 @@ public class TnSeq {
                     continue;
                 fw.write(""+i, seq);
             }
+            tabWriter.close();
             fw.close();
             if (geneCount==0)
                 throw new Exception("No genes called for this genome");
+
+            // make GC file
+            File gcFile = new File(genomeDir+"/genes.GC");
+            ProcessBuilder pb =
+                new ProcessBuilder("/kb/module/feba/bin/RegionGC.pl",
+                                   genomeDir+"/genome.fna",
+                                   genomeDir+"/genes.tab");
+            pb.redirectOutput(Redirect.to(gcFile));
+            pb.start().waitFor();
         }
         catch (Exception e) {
             System.out.println(e.getMessage());
@@ -209,6 +215,33 @@ public class TnSeq {
         
         return genomeDir;
     }
+
+    /**
+       map reads.  Use only one model, for now.  Returns 2 files: stdout and stderr.
+    */
+    public static File[] mapReads(File tempDir,
+                                  File readsFile,
+                                  File genomeDir) throws Exception {
+        File[] rv = { File.createTempFile("map", ".tab", tempDir),
+                      File.createTempFile("map", ".log", tempDir) };
+        rv[0].delete();
+        rv[1].delete();
+        
+        ProcessBuilder pb =
+            new ProcessBuilder("/kb/module/feba/bin/MapTnSeq.pl",
+                               "-model",
+                               "/kb/module/feba/primers/model_pKMW7",
+                               "-first",
+                               readsFile.getAbsolutePath(),
+                               "-genome",
+                               genomeDir+"/genome.fna");
+        pb.redirectOutput(Redirect.to(rv[0]));
+        pb.redirectError(Redirect.to(rv[1]));
+
+        pb.start().waitFor();
+        return rv;
+    }
+                                
     
     /**
        runs the whole TnSeq pipeline
@@ -216,16 +249,25 @@ public class TnSeq {
     public static String run(String wsURL,
                              AuthToken token,
                              TnSeqInput inputParams) throws Exception {
+
         File readsFile = dumpSEReadsFASTQ(wsURL,
                                           token,
                                           tempDir,
                                           inputParams.getWs(),
                                           inputParams.getInputReadLibrary());
+
         File genomeDir = dumpGenomeTab(wsURL,
                                        token,
                                        tempDir,
                                        inputParams.getWs(),
                                        inputParams.getInputGenome());
-        return "reads file: "+readsFile.getAbsolutePath()+", genome dir: "+genomeDir.getAbsolutePath();
+
+        File[] mapOutput = mapReads(tempDir,readsFile,genomeDir);
+        
+        return
+            "reads file: "+readsFile.getAbsolutePath()+", "+
+            "genome dir: "+genomeDir.getAbsolutePath()+", "+
+            "output: "+mapOutput[0].getAbsolutePath()+", "+
+            "log: "+mapOutput[1].getAbsolutePath();
     }
 }
