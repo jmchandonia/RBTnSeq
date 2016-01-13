@@ -218,12 +218,13 @@ public class TnSeq {
     }
 
     /**
-       Map reads.  Use only one model, for now.
-       Returns 2 files: stdout and stderr.
+       Map reads.  Returns 2 files: stdout and stderr.
+       This step is slow--about 20 minutes.
     */
     public static File[] mapReads(File tempDir,
                                   File readsFile,
-                                  File genomeDir) throws Exception {
+                                  File genomeDir,
+                                  String primerModelName) throws Exception {
         File[] rv = { File.createTempFile("map", ".tab", tempDir),
                       File.createTempFile("map", ".log", tempDir) };
         rv[0].delete();
@@ -232,7 +233,7 @@ public class TnSeq {
         ProcessBuilder pb =
             new ProcessBuilder("/kb/module/feba/bin/MapTnSeq.pl",
                                "-model",
-                               "/kb/module/feba/primers/model_pKMW7",
+                               "/kb/module/feba/primers/"+primerModelName,
                                "-first",
                                readsFile.getAbsolutePath(),
                                "-genome",
@@ -247,11 +248,17 @@ public class TnSeq {
     /**
        Design random pool, using uniquely mapped barcodes.
        Returns 2 files: stdout and stderr.  Input is the
-       tab file that is the stdout from mapReads.  minN is
-       fixed at 10 for now.
+       tab file that is the stdout from mapReads, and the tab-delimited
+       genome dump
+
+       minN is the minimum number of "good" reads for a barcode supporting
+       its mapping.  ("Good" means a unique hit to the genome, where the
+       first position in the read matches the genome sequence.)
     */
     public static File[] designRandomPool(File tempDir,
-                                          File mappedReadsFile) throws Exception {
+                                          File mappedReadsFile,
+                                          File genesFile,
+                                          int minN) throws Exception {
         File[] rv = { File.createTempFile("pool", ".pool", tempDir),
                       File.createTempFile("pool", ".log", tempDir) };
         rv[0].delete();
@@ -259,11 +266,15 @@ public class TnSeq {
 
         ProcessBuilder pb =
             new ProcessBuilder("/kb/module/feba/bin/DesignRandomPool.pl",
+                               "-pool",
+                               rv[0].getAbsolutePath(),
+                               "-genes",
+                               genesFile.getAbsolutePath(),
                                "-minN",
-                               "10");
-        pb.redirectInput(Redirect.from(mappedReadsFile));
-        pb.redirectOutput(Redirect.to(rv[0]));
-        pb.redirectError(Redirect.to(rv[1]));
+                               "10",
+                               mappedReadsFile.getAbsolutePath());
+        pb.redirectErrorStream(true);
+        pb.redirectOutput(Redirect.to(rv[1]));
 
         pb.start().waitFor();
         return rv;
@@ -288,17 +299,12 @@ public class TnSeq {
                                        inputParams.getWs(),
                                        inputParams.getInputGenome());
 
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+        File[] mapOutput = mapReads(tempDir,readsFile,genomeDir,"model_pKMW7");
 
-        System.out.println("start map at "+sdf.format(new Date()));
-
-        File[] mapOutput = mapReads(tempDir,readsFile,genomeDir);
-
-        System.out.println("finish map at "+sdf.format(new Date()));
-
-        File[] poolOutput = designRandomPool(tempDir,mapOutput[0]);
-        
-        System.out.println("finish pool at "+sdf.format(new Date()));
+        File[] poolOutput = designRandomPool(tempDir,
+                                             mapOutput[0],
+                                             new File(genomeDir+"/genes.tab"),
+                                             10);
 
         return
             "reads file: "+readsFile.getAbsolutePath()+", "+
