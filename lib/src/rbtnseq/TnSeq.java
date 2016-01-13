@@ -3,6 +3,7 @@ package rbtnseq;
 import java.io.*;
 import java.util.*;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 
 import us.kbase.auth.AuthService;
 import us.kbase.auth.AuthToken;
@@ -217,7 +218,8 @@ public class TnSeq {
     }
 
     /**
-       map reads.  Use only one model, for now.  Returns 2 files: stdout and stderr.
+       Map reads.  Use only one model, for now.
+       Returns 2 files: stdout and stderr.
     */
     public static File[] mapReads(File tempDir,
                                   File readsFile,
@@ -241,7 +243,31 @@ public class TnSeq {
         pb.start().waitFor();
         return rv;
     }
-                                
+
+    /**
+       Design random pool, using uniquely mapped barcodes.
+       Returns 2 files: stdout and stderr.  Input is the
+       tab file that is the stdout from mapReads.  minN is
+       fixed at 10 for now.
+    */
+    public static File[] designRandomPool(File tempDir,
+                                          File mappedReadsFile) throws Exception {
+        File[] rv = { File.createTempFile("pool", ".pool", tempDir),
+                      File.createTempFile("pool", ".log", tempDir) };
+        rv[0].delete();
+        rv[1].delete();
+
+        ProcessBuilder pb =
+            new ProcessBuilder("/kb/module/feba/bin/DesignRandomPool.pl",
+                               "-minN",
+                               "10");
+        pb.redirectInput(Redirect.from(mappedReadsFile));
+        pb.redirectOutput(Redirect.to(rv[0]));
+        pb.redirectError(Redirect.to(rv[1]));
+
+        pb.start().waitFor();
+        return rv;
+    }
     
     /**
        runs the whole TnSeq pipeline
@@ -262,12 +288,24 @@ public class TnSeq {
                                        inputParams.getWs(),
                                        inputParams.getInputGenome());
 
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+
+        System.out.println("start map at "+sdf.format(new Date()));
+
         File[] mapOutput = mapReads(tempDir,readsFile,genomeDir);
+
+        System.out.println("finish map at "+sdf.format(new Date()));
+
+        File[] poolOutput = designRandomPool(tempDir,mapOutput[0]);
         
+        System.out.println("finish pool at "+sdf.format(new Date()));
+
         return
             "reads file: "+readsFile.getAbsolutePath()+", "+
             "genome dir: "+genomeDir.getAbsolutePath()+", "+
-            "output: "+mapOutput[0].getAbsolutePath()+", "+
-            "log: "+mapOutput[1].getAbsolutePath();
+            "map output: "+mapOutput[0].getAbsolutePath()+", "+
+            "map log: "+mapOutput[1].getAbsolutePath()+", "+
+            "pool output: "+poolOutput[0].getAbsolutePath()+", "+
+            "pool log: "+poolOutput[1].getAbsolutePath();
     }
 }
