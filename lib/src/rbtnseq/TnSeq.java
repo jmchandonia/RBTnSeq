@@ -124,8 +124,8 @@ public class TnSeq {
             for (int i=0; i<nContigs; i++) {
                 String contigID = contigs.get(i);
                 String seq = contigSeqs.get(contigID);
-                fw.write(""+i, seq.toUpperCase());
-                contigMap.put(contigID, new Integer(i));
+                fw.write(""+(i+1), seq.toUpperCase());
+                contigMap.put(contigID, new Integer(i+1));
             }
             fw.close();
 
@@ -178,6 +178,10 @@ public class TnSeq {
                 if (desc==null)
                     desc = "";
 
+                // strip quotes from desc, since they may be
+                // confusing Morgan's code.
+                desc = desc.replaceAll("\"|\'", "");
+
                 // only list features with sequence
                 String seq = feat.getDnaSequence();
                 if ((seq==null) || (seq.length()==0))
@@ -185,7 +189,7 @@ public class TnSeq {
 
                 // we have a called gene
                 geneCount++;                    
-                tabWriter.println(i+"\t"+alias+"\t"+type+"\t"+contigNum+"\t"+begin+"\t"+end+"\t"+strand+"\t"+alias+"\t"+desc);
+                tabWriter.println((i+1)+"\tfeat"+(i+1)+"\t"+type+"\t"+contigNum+"\t"+begin+"\t"+end+"\t"+strand+"\t"+alias+"\t"+desc);
 
                 // see if feature is a protein.  If so, add to aaseq.
                 seq = feat.getProteinTranslation();
