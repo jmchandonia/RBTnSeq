@@ -124,8 +124,8 @@ public class TnSeq {
             for (int i=0; i<nContigs; i++) {
                 String contigID = contigs.get(i);
                 String seq = contigSeqs.get(contigID);
-                fw.write(""+(i+1), seq.toUpperCase());
-                contigMap.put(contigID, new Integer(i+1));
+                fw.write(""+(i+1000), seq.toUpperCase());
+                contigMap.put(contigID, new Integer(i+1000));
             }
             fw.close();
 
