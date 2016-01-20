@@ -6,18 +6,15 @@ available from https://bitbucket.org/berkeleylab/feba
 
 module RBTnSeq {
         /* Inputs to TnSeq part of pipeline.
-           This needs to be split into 2 steps, pending
-           update of some KBaseRBTnSeq objects */
+           This should be split into 2 methods or run as an app */
 	typedef structure {
 	    string ws;
             string input_read_library;
             string input_genome;
-            string sequenced_at;
-            string start_date;
-            /* string input_barcode_model; is fixed for now */
+            string input_barcode_model;
+            int input_minN;
+            string output_mapped_reads;
             string output_pool;
-            string output_tnseq_experiment;
-            string output_tnseq_library;
 	} TnSeqInput;
 
 	/* runs TnSeq part of pipeline */

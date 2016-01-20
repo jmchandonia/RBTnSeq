@@ -35,15 +35,78 @@
 	    }
 	},
 	{
-	    "id": "sequenced_at",
+	    "id": "input_barcode_model",
 	    "optional": false,
-	    "advanced": false,
+	    "advanced": true,
 	    "allow_multiple": false,
-	    "default_values": [ "" ],
-	    "field_type": "text"
+	    "default_values": [ "model_pKMW7" ],
+            "field_type": "dropdown",
+            "dropdown_options": {
+                "options": [
+                    {
+                        "value": "BarSeqPrimersH48",
+                        "display": "BarSeqPrimersH48",
+                        "id": "BarSeqPrimersH48",
+                        "ui-name": "BarSeqPrimersH48"
+                    },
+                    {
+                        "value": "model_ezTn5_kan1",
+                        "display": "model_ezTn5_kan1",
+                        "id": "model_ezTn5_kan1",
+                        "ui-name": "model_ezTn5_kan1"
+                    },
+                    {
+                        "value": "model_ezTn5_kanU",
+                        "display": "model_ezTn5_kanU",
+                        "id": "model_ezTn5_kanU",
+                        "ui-name": "model_ezTn5_kanU"
+                    },
+                    {
+                        "value": "model_pHIMAR_kan",
+                        "display": "model_pHIMAR_kan",
+                        "id": "model_pHIMAR_kan",
+                        "ui-name": "model_pHIMAR_kan"
+                    },
+                    {
+                        "value": "model_pKMW3",
+                        "display": "model_pKMW3",
+                        "id": "model_pKMW3",
+                        "ui-name": "model_pKMW3"
+                    },
+                    {
+                        "value": "model_pKMW3_universal",
+                        "display": "model_pKMW3_universal",
+                        "id": "model_pKMW3_universal",
+                        "ui-name": "model_pKMW3_universal"
+                    },
+                    {
+                        "value": "model_pKMW7",
+                        "display": "model_pKMW7",
+                        "id": "model_pKMW7",
+                        "ui-name": "model_pKMW7"
+                    },
+                    {
+                        "value": "model_pKMW7_U",
+                        "display": "model_pKMW7_U",
+                        "id": "model_pKMW7_U",
+                        "ui-name": "model_pKMW7_U"
+                    }
+                ]
+            }
 	},
 	{
-	    "id": "start_date",
+	    "id": "input_minN",
+	    "optional": false,
+	    "advanced": true,
+	    "allow_multiple": false,
+	    "default_values": [ "5" ],
+	    "field_type": "text",
+            "text_options": {
+                "validate_as": "int"
+            }
+	},
+	{
+	    "id": "output_mapped_reads",
 	    "optional": false,
 	    "advanced": false,
 	    "allow_multiple": false,
@@ -57,24 +120,7 @@
 	    "allow_multiple": false,
 	    "default_values": [ "" ],
 	    "field_type": "text"
-	},
-	{
-	    "id": "output_tnseq_experiment",
-	    "optional": false,
-	    "advanced": false,
-	    "allow_multiple": false,
-	    "default_values": [ "" ],
-	    "field_type": "text"
-	},
-	{
-	    "id": "output_tnseq_library",
-	    "optional": false,
-	    "advanced": false,
-	    "allow_multiple": false,
-	    "default_values": [ "" ],
-	    "field_type": "text"
 	}
-	
     ],    
     "behavior": {
 	"service-mapping": {
@@ -95,24 +141,20 @@
 		    "target_property": "input_genome"
 		},
 		{
-		    "input_parameter": "sequenced_at",
-		    "target_property": "sequenced_at"
+		    "input_parameter": "input_barcode_model",
+		    "target_property": "input_barcode_model"
 		},
 		{
-		    "input_parameter": "start_date",
-		    "target_property": "start_date"
+		    "input_parameter": "input_minN",
+		    "target_property": "input_minN"
 		},
 		{
 		    "input_parameter": "output_pool",
 		    "target_property": "output_pool"
 		},
 		{
-		    "input_parameter": "output_tnseq_experiment",
-		    "target_property": "output_tnseq_experiment"
-		},
-		{
-		    "input_parameter": "output_tnseq_library",
-		    "target_property": "output_tnseq_library"
+		    "input_parameter": "output_mapped_reads",
+		    "target_property": "output_mapped_reads"
 		}
 	    ],
 	    "output_mapping": [

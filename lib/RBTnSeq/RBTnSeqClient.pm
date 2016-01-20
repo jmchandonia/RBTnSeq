@@ -120,11 +120,10 @@ TnSeqInput is a reference to a hash where the following keys are defined:
 	ws has a value which is a string
 	input_read_library has a value which is a string
 	input_genome has a value which is a string
-	sequenced_at has a value which is a string
-	start_date has a value which is a string
+	input_barcode_model has a value which is a string
+	input_minN has a value which is an int
+	output_mapped_reads has a value which is a string
 	output_pool has a value which is a string
-	output_tnseq_experiment has a value which is a string
-	output_tnseq_library has a value which is a string
 
 </pre>
 
@@ -138,11 +137,10 @@ TnSeqInput is a reference to a hash where the following keys are defined:
 	ws has a value which is a string
 	input_read_library has a value which is a string
 	input_genome has a value which is a string
-	sequenced_at has a value which is a string
-	start_date has a value which is a string
+	input_barcode_model has a value which is a string
+	input_minN has a value which is an int
+	output_mapped_reads has a value which is a string
 	output_pool has a value which is a string
-	output_tnseq_experiment has a value which is a string
-	output_tnseq_library has a value which is a string
 
 
 =end text
@@ -336,8 +334,7 @@ sub _validate_version {
 =item Description
 
 Inputs to TnSeq part of pipeline.
-This needs to be split into 2 steps, pending
-update of some KBaseRBTnSeq objects
+This should be split into 2 methods or run as an app
 
 
 =item Definition
@@ -349,11 +346,10 @@ a reference to a hash where the following keys are defined:
 ws has a value which is a string
 input_read_library has a value which is a string
 input_genome has a value which is a string
-sequenced_at has a value which is a string
-start_date has a value which is a string
+input_barcode_model has a value which is a string
+input_minN has a value which is an int
+output_mapped_reads has a value which is a string
 output_pool has a value which is a string
-output_tnseq_experiment has a value which is a string
-output_tnseq_library has a value which is a string
 
 </pre>
 
@@ -365,11 +361,10 @@ a reference to a hash where the following keys are defined:
 ws has a value which is a string
 input_read_library has a value which is a string
 input_genome has a value which is a string
-sequenced_at has a value which is a string
-start_date has a value which is a string
+input_barcode_model has a value which is a string
+input_minN has a value which is an int
+output_mapped_reads has a value which is a string
 output_pool has a value which is a string
-output_tnseq_experiment has a value which is a string
-output_tnseq_library has a value which is a string
 
 
 =end text

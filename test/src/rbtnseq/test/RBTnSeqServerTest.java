@@ -87,11 +87,10 @@ public class RBTnSeqServerTest {
             .withWs("3262")
             .withInputReadLibrary("GBVT06H_reads")
             .withInputGenome("kb|g.3562")
-            .withSequencedAt("cornerstone.qb3.berkeley.edu")
-            .withStartDate("2015-04-21")
-            .withOutputPool("test_pool")
-            .withOutputTnseqExperiment("test_experiment")
-            .withOutputTnseqLibrary("test_library");
+            .withInputBarcodeModel("model_pKMW7")
+            .withInputMinN(10L)
+            .withOutputMappedReads("test_mapped_reads")
+            .withOutputPool("test_pool");
         String rv = impl.runTnSeq(input, token, (RpcContext)null);
         System.out.println("tnseq test returned "+rv);
         Assert.assertNotNull(rv);

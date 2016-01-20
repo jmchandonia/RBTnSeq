@@ -15,8 +15,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * <p>Original spec-file type: TnSeqInput</p>
  * <pre>
  * Inputs to TnSeq part of pipeline.
- * This needs to be split into 2 steps, pending
- * update of some KBaseRBTnSeq objects
+ * This should be split into 2 methods or run as an app
  * </pre>
  * 
  */
@@ -26,11 +25,10 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "ws",
     "input_read_library",
     "input_genome",
-    "sequenced_at",
-    "start_date",
-    "output_pool",
-    "output_tnseq_experiment",
-    "output_tnseq_library"
+    "input_barcode_model",
+    "input_minN",
+    "output_mapped_reads",
+    "output_pool"
 })
 public class TnSeqInput {
 
@@ -40,16 +38,14 @@ public class TnSeqInput {
     private String inputReadLibrary;
     @JsonProperty("input_genome")
     private String inputGenome;
-    @JsonProperty("sequenced_at")
-    private String sequencedAt;
-    @JsonProperty("start_date")
-    private String startDate;
+    @JsonProperty("input_barcode_model")
+    private String inputBarcodeModel;
+    @JsonProperty("input_minN")
+    private Long inputMinN;
+    @JsonProperty("output_mapped_reads")
+    private String outputMappedReads;
     @JsonProperty("output_pool")
     private String outputPool;
-    @JsonProperty("output_tnseq_experiment")
-    private String outputTnseqExperiment;
-    @JsonProperty("output_tnseq_library")
-    private String outputTnseqLibrary;
     private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 
     @JsonProperty("ws")
@@ -97,33 +93,48 @@ public class TnSeqInput {
         return this;
     }
 
-    @JsonProperty("sequenced_at")
-    public String getSequencedAt() {
-        return sequencedAt;
+    @JsonProperty("input_barcode_model")
+    public String getInputBarcodeModel() {
+        return inputBarcodeModel;
     }
 
-    @JsonProperty("sequenced_at")
-    public void setSequencedAt(String sequencedAt) {
-        this.sequencedAt = sequencedAt;
+    @JsonProperty("input_barcode_model")
+    public void setInputBarcodeModel(String inputBarcodeModel) {
+        this.inputBarcodeModel = inputBarcodeModel;
     }
 
-    public TnSeqInput withSequencedAt(String sequencedAt) {
-        this.sequencedAt = sequencedAt;
+    public TnSeqInput withInputBarcodeModel(String inputBarcodeModel) {
+        this.inputBarcodeModel = inputBarcodeModel;
         return this;
     }
 
-    @JsonProperty("start_date")
-    public String getStartDate() {
-        return startDate;
+    @JsonProperty("input_minN")
+    public Long getInputMinN() {
+        return inputMinN;
     }
 
-    @JsonProperty("start_date")
-    public void setStartDate(String startDate) {
-        this.startDate = startDate;
+    @JsonProperty("input_minN")
+    public void setInputMinN(Long inputMinN) {
+        this.inputMinN = inputMinN;
     }
 
-    public TnSeqInput withStartDate(String startDate) {
-        this.startDate = startDate;
+    public TnSeqInput withInputMinN(Long inputMinN) {
+        this.inputMinN = inputMinN;
+        return this;
+    }
+
+    @JsonProperty("output_mapped_reads")
+    public String getOutputMappedReads() {
+        return outputMappedReads;
+    }
+
+    @JsonProperty("output_mapped_reads")
+    public void setOutputMappedReads(String outputMappedReads) {
+        this.outputMappedReads = outputMappedReads;
+    }
+
+    public TnSeqInput withOutputMappedReads(String outputMappedReads) {
+        this.outputMappedReads = outputMappedReads;
         return this;
     }
 
@@ -142,36 +153,6 @@ public class TnSeqInput {
         return this;
     }
 
-    @JsonProperty("output_tnseq_experiment")
-    public String getOutputTnseqExperiment() {
-        return outputTnseqExperiment;
-    }
-
-    @JsonProperty("output_tnseq_experiment")
-    public void setOutputTnseqExperiment(String outputTnseqExperiment) {
-        this.outputTnseqExperiment = outputTnseqExperiment;
-    }
-
-    public TnSeqInput withOutputTnseqExperiment(String outputTnseqExperiment) {
-        this.outputTnseqExperiment = outputTnseqExperiment;
-        return this;
-    }
-
-    @JsonProperty("output_tnseq_library")
-    public String getOutputTnseqLibrary() {
-        return outputTnseqLibrary;
-    }
-
-    @JsonProperty("output_tnseq_library")
-    public void setOutputTnseqLibrary(String outputTnseqLibrary) {
-        this.outputTnseqLibrary = outputTnseqLibrary;
-    }
-
-    public TnSeqInput withOutputTnseqLibrary(String outputTnseqLibrary) {
-        this.outputTnseqLibrary = outputTnseqLibrary;
-        return this;
-    }
-
     @JsonAnyGetter
     public Map<String, Object> getAdditionalProperties() {
         return this.additionalProperties;
@@ -184,7 +165,7 @@ public class TnSeqInput {
 
     @Override
     public String toString() {
-        return ((((((((((((((((((("TnSeqInput"+" [ws=")+ ws)+", inputReadLibrary=")+ inputReadLibrary)+", inputGenome=")+ inputGenome)+", sequencedAt=")+ sequencedAt)+", startDate=")+ startDate)+", outputPool=")+ outputPool)+", outputTnseqExperiment=")+ outputTnseqExperiment)+", outputTnseqLibrary=")+ outputTnseqLibrary)+", additionalProperties=")+ additionalProperties)+"]");
+        return ((((((((((((((((("TnSeqInput"+" [ws=")+ ws)+", inputReadLibrary=")+ inputReadLibrary)+", inputGenome=")+ inputGenome)+", inputBarcodeModel=")+ inputBarcodeModel)+", inputMinN=")+ inputMinN)+", outputMappedReads=")+ outputMappedReads)+", outputPool=")+ outputPool)+", additionalProperties=")+ additionalProperties)+"]");
     }
 
 }

@@ -262,7 +262,7 @@ public class TnSeq {
     public static File[] designRandomPool(File tempDir,
                                           File mappedReadsFile,
                                           File genesFile,
-                                          int minN) throws Exception {
+                                          long minN) throws Exception {
         File[] rv = { File.createTempFile("pool", ".pool", tempDir),
                       File.createTempFile("pool", ".log", tempDir) };
         rv[0].delete();
@@ -275,7 +275,7 @@ public class TnSeq {
                                "-genes",
                                genesFile.getAbsolutePath(),
                                "-minN",
-                               "10",
+                               ""+minN,
                                mappedReadsFile.getAbsolutePath());
         pb.redirectErrorStream(true);
         pb.redirectOutput(Redirect.to(rv[1]));
@@ -303,12 +303,15 @@ public class TnSeq {
                                        inputParams.getWs(),
                                        inputParams.getInputGenome());
 
-        File[] mapOutput = mapReads(tempDir,readsFile,genomeDir,"model_pKMW7");
+        File[] mapOutput = mapReads(tempDir,
+                                    readsFile,
+                                    genomeDir,
+                                    inputParams.getInputBarcodeModel());
 
         File[] poolOutput = designRandomPool(tempDir,
                                              mapOutput[0],
                                              new File(genomeDir+"/genes.tab"),
-                                             10);
+                                             inputParams.getInputMinN().longValue());
 
         return
             "reads file: "+readsFile.getAbsolutePath()+", "+
