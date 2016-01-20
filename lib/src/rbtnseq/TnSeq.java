@@ -11,6 +11,7 @@ import us.kbase.common.service.*;
 import us.kbase.workspace.*;
 import us.kbase.kbasegenomes.*;
 import us.kbase.kbaseassembly.*;
+import us.kbase.kbaserbtnseq.*;
 import us.kbase.common.utils.FastaWriter;
 
 import com.fasterxml.jackson.databind.*;
@@ -250,6 +251,22 @@ public class TnSeq {
     }
 
     /**
+       make a MappedReads object from the output (.tab file) from
+       mapReads
+    */
+    public static MappedReads parseMappedReads(String genomeRef,
+                                               String readsRef,
+                                               File mappedReadsFile,
+                                               String primerModelName) throws Exception {
+        MappedReads rv = new MappedReads()
+            .withGenome(genomeRef)
+            .withReads(readsRef);
+
+        return rv;
+    }
+    
+
+    /**
        Design random pool, using uniquely mapped barcodes.
        Returns 2 files: stdout and stderr.  Input is the
        tab file that is the stdout from mapReads, and the tab-delimited
@@ -283,7 +300,7 @@ public class TnSeq {
         pb.start().waitFor();
         return rv;
     }
-    
+
     /**
        runs the whole TnSeq pipeline
     */
