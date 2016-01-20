@@ -1,6 +1,8 @@
 package rbtnseq;
 
 import java.io.*;
+import java.nio.file.*;
+import java.nio.charset.*;
 import java.util.*;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -15,6 +17,10 @@ import us.kbase.kbaserbtnseq.*;
 import us.kbase.common.utils.FastaWriter;
 
 import com.fasterxml.jackson.databind.*;
+
+import org.strbio.IO;
+import org.strbio.io.*;
+import org.strbio.util.*;
 
 import static java.lang.ProcessBuilder.Redirect;
 
@@ -38,6 +44,13 @@ public class TnSeq {
             rv = new WorkspaceClient(new URL(wsURL),token);
         rv.setAuthAllowedForHttp(true);
         return rv;
+    }
+
+    /**
+       helper function to get the reference back when saving an object
+    */
+    public static String getRefFromObjectInfo(Tuple11<Long, String, String, String, Long, String, Long, String, String, Long, Map<String,String>> info) {
+        return info.getE7() + "/" + info.getE1() + "/" + info.getE5();
     }
 
     /**
@@ -81,20 +94,25 @@ public class TnSeq {
     }
 
     /**
-       dumps a Genome object out in FEBA directory format; returns
-       name of genome directory
+       dumps a Genome object out in FEBA directory format.
+
+       returns tuple2:
+       name of genome directory,
+       and map of fake contig ids to real contig refs
     */
-    public static File dumpGenomeTab(String wsURL,
-                                     AuthToken token,
-                                     File tempDir,
-                                     String ws,
-                                     String genomeRef) throws Exception {
+    public static Tuple2<File,Map<String,String>> dumpGenomeTab(String wsURL,
+                                                                AuthToken token,
+                                                                File tempDir,
+                                                                String ws,
+                                                                String genomeRef) throws Exception {
         WorkspaceClient wc = createWsClient(wsURL,token);
         ObjectMapper mapper = new ObjectMapper();
 
         File genomeDir = File.createTempFile("genome", "", tempDir);
         genomeDir.delete();
         genomeDir.mkdir();
+
+        HashMap<String,String> reverseContigMap = new HashMap<String,String>();
 
         try {
             // first get genome object
@@ -127,6 +145,7 @@ public class TnSeq {
                 String seq = contigSeqs.get(contigID);
                 fw.write(""+(i+1000), seq.toUpperCase());
                 contigMap.put(contigID, new Integer(i+1000));
+                reverseContigMap.put(""+(i+1000), contigID);
             }
             fw.close();
 
@@ -217,9 +236,14 @@ public class TnSeq {
             System.out.println("Error reading genome");
             e.printStackTrace();
             genomeDir = null;
+            reverseContigMap = null;
         }
+
+        Tuple2 rv = new Tuple2<File,Map<String,String>>()
+            .withE1(genomeDir)
+            .withE2(reverseContigMap);
         
-        return genomeDir;
+        return rv;
     }
 
     /**
@@ -251,20 +275,105 @@ public class TnSeq {
     }
 
     /**
+       make a tnseq_model object (Tuple2<String,String>) from one
+       of the standard feba model files
+    */
+    public static Tuple2<String,String> parseModel(String primerModelName) throws Exception {
+        List<String> lines = Files.readAllLines(Paths.get("/kb/module/feba/primers/"+primerModelName), Charset.defaultCharset());
+        if (lines.size() < 2)
+            throw new Exception("Barcode model file "+primerModelName+" seems corrupted; should have two lines");
+        return new Tuple2<String,String>()
+            .withE1(lines.get(0))
+            .withE1(lines.get(1));
+    }
+
+    /**
        make a MappedReads object from the output (.tab file) from
        mapReads
     */
     public static MappedReads parseMappedReads(String genomeRef,
                                                String readsRef,
                                                File mappedReadsFile,
-                                               String primerModelName) throws Exception {
+                                               String primerModelName,
+                                               Map<String,String> contigMap) throws Exception {
+
+        List<Tuple10<String, String, String, Long, String, Long, Long, Long, Double, Double>> mappedReads = new ArrayList<Tuple10<String, String, String, Long, String, Long, Long, Long, Double, Double>>();
+        
         MappedReads rv = new MappedReads()
             .withGenome(genomeRef)
-            .withReads(readsRef);
+            .withReads(readsRef)
+            .withModel(parseModel(primerModelName))
+            .withMappedReads(mappedReads);
 
+        BufferedReader infile = IO.openReader(mappedReadsFile.getPath());
+        if (infile==null)
+            throw new Exception("failed to open mapped reads output "+mappedReadsFile.getPath());
+
+        while (infile.ready()) {
+            String buffer = infile.readLine();
+            if (buffer==null) {
+                infile.close();
+                break;
+            }
+
+            String[] fields = buffer.split("\t");
+
+            Tuple10<String, String, String, Long, String, Long, Long, Long, Double, Double> mappedRead = new Tuple10<String, String, String, Long, String, Long, Long, Long, Double, Double>();
+            mappedRead.setE1(fields[0]); // read_name
+            mappedRead.setE2(fields[1]); // barcode
+
+            // mapped reads past end of transposon don't have all fields
+            if (!fields[2].equals("pastEnd")) {
+                mappedRead.setE3(contigMap.get(fields[2])); // contig_ref scaffold
+                mappedRead.setE4(new Long(StringUtil.atol(fields[3]))); // insert_pos
+                mappedRead.setE5(fields[4]); // strand
+                mappedRead.setE6(new Long(StringUtil.atol(fields[5]))); // is_unique
+                mappedRead.setE7(new Long(StringUtil.atol(fields[6]))); // hit_start
+                mappedRead.setE8(new Long(StringUtil.atol(fields[7]))); // hit_end
+                mappedRead.setE9(new Double(StringUtil.atod(fields[8]))); // bit_score
+                mappedRead.setE10(new Double(StringUtil.atod(fields[9])));; // pct_identity
+            }
+            mappedReads.add(mappedRead);
+        }
+        infile.close();
+            
         return rv;
     }
-    
+
+    /**
+       save mapped reads to workspace, with provenance.
+       returns ref
+    */
+    public static String saveMappedReads(String wsURL,
+                                         AuthToken token,
+                                         String ws,
+                                         String id,
+                                         MappedReads mappedReads,
+                                         String methodName,
+                                         List<UObject> methodParams) throws Exception {
+
+        WorkspaceClient wc = createWsClient(wsURL,token);
+
+        // to get service version:
+        RBTnSeqServer server = new RBTnSeqServer();
+        
+        ObjectSaveData data = new ObjectSaveData()
+            .withData(new UObject(mappedReads))
+            .withType("KBaseRBTnSeq.MappedReads")
+            .withProvenance(Arrays.asList(new ProvenanceAction()
+                                          .withDescription("TnSeq mapped reads")
+                                          .withService("RBTnSeq")
+                                          .withServiceVer(server.version(null))
+                                          .withMethod(methodName)
+                                          .withMethodParams(methodParams)));
+        try {
+            long objid = Long.parseLong(id);
+            data.withObjid(objid);
+        } catch (NumberFormatException ex) {
+            data.withName(id);
+        }
+        return getRefFromObjectInfo(wc.saveObjects(new SaveObjectsParams().withWorkspace(ws).withObjects(Arrays.asList(data))).get(0));
+    }
 
     /**
        Design random pool, using uniquely mapped barcodes.
@@ -314,16 +423,34 @@ public class TnSeq {
                                           inputParams.getWs(),
                                           inputParams.getInputReadLibrary());
 
-        File genomeDir = dumpGenomeTab(wsURL,
-                                       token,
-                                       tempDir,
-                                       inputParams.getWs(),
-                                       inputParams.getInputGenome());
+        Tuple2<File,Map<String,String>> genomeData = dumpGenomeTab(wsURL,
+                                                                   token,
+                                                                   tempDir,
+                                                                   inputParams.getWs(),
+                                                                   inputParams.getInputGenome());
+        File genomeDir = genomeData.getE1();
+        Map<String,String> contigMap = genomeData.getE2();
 
         File[] mapOutput = mapReads(tempDir,
                                     readsFile,
                                     genomeDir,
                                     inputParams.getInputBarcodeModel());
+
+        MappedReads mappedReads = parseMappedReads(inputParams.getInputGenome(),
+                                                   inputParams.getInputReadLibrary(),
+                                                   readsFile,
+                                                   inputParams.getInputBarcodeModel(),
+                                                   contigMap);
+
+
+        String mappedReadsID = saveMappedReads(wsURL,
+                                               token,
+                                               inputParams.getWs(),
+                                               inputParams.getOutputMappedReads(),
+                                               mappedReads,
+                                               "TnSeq.run",
+                                               Arrays.asList(new UObject(inputParams)));
+        
 
         File[] poolOutput = designRandomPool(tempDir,
                                              mapOutput[0],
