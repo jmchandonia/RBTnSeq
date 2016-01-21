@@ -317,13 +317,15 @@ public class TnSeq {
             }
 
             String[] fields = buffer.split("\t");
+            if (fields.length < 3)
+                continue;
 
             Tuple10<String, String, String, Long, String, Long, Long, Long, Double, Double> mappedRead = new Tuple10<String, String, String, Long, String, Long, Long, Long, Double, Double>();
             mappedRead.setE1(fields[0]); // read_name
             mappedRead.setE2(fields[1]); // barcode
 
             // mapped reads past end of transposon don't have all fields
-            if (!fields[2].equals("pastEnd")) {
+            if ((!fields[2].equals("pastEnd")) && (fields.length > 9)) {
                 mappedRead.setE3(contigMap.get(fields[2])); // contig_ref scaffold
                 mappedRead.setE4(new Long(StringUtil.atol(fields[3]))); // insert_pos
                 mappedRead.setE5(fields[4]); // strand
@@ -417,6 +419,8 @@ public class TnSeq {
                              AuthToken token,
                              TnSeqInput inputParams) throws Exception {
 
+        String rv = "TnSeq pipeline output:\n";
+
         File readsFile = dumpSEReadsFASTQ(wsURL,
                                           token,
                                           tempDir,
@@ -438,7 +442,7 @@ public class TnSeq {
 
         MappedReads mappedReads = parseMappedReads(inputParams.getInputGenome(),
                                                    inputParams.getInputReadLibrary(),
-                                                   readsFile,
+                                                   mapOutput[0],
                                                    inputParams.getInputBarcodeModel(),
                                                    contigMap);
 
@@ -450,19 +454,26 @@ public class TnSeq {
                                                mappedReads,
                                                "TnSeq.run",
                                                Arrays.asList(new UObject(inputParams)));
-        
+
+        rv += "---\nStep 1: Read mapping output:\n";
+        List<String> lines = Files.readAllLines(Paths.get(mapOutput[1].getPath()), Charset.defaultCharset());
+        for (String line : lines) {
+            if (line.startsWith("Parsed model"))
+                line = "Parsed model "+inputParams.getInputBarcodeModel();
+            rv += line+"\n";
+        }
 
         File[] poolOutput = designRandomPool(tempDir,
                                              mapOutput[0],
                                              new File(genomeDir+"/genes.tab"),
                                              inputParams.getInputMinN().longValue());
 
-        return
-            "reads file: "+readsFile.getAbsolutePath()+", "+
-            "genome dir: "+genomeDir.getAbsolutePath()+", "+
-            "map output: "+mapOutput[0].getAbsolutePath()+", "+
-            "map log: "+mapOutput[1].getAbsolutePath()+", "+
-            "pool output: "+poolOutput[0].getAbsolutePath()+", "+
-            "pool log: "+poolOutput[1].getAbsolutePath();
+        rv += "\n---\n\nStep 2: TnSeq pool construction output:\n";
+        lines = Files.readAllLines(Paths.get(poolOutput[1].getPath()), Charset.defaultCharset());
+        for (String line : lines) {
+            rv += line+"\n";
+        }
+
+        return rv;
     }
 }
