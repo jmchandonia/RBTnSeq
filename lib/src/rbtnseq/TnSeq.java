@@ -294,10 +294,8 @@ public class TnSeq {
     public static MappedReads parseMappedReads(String genomeRef,
                                                String readsRef,
                                                File mappedReadsFile,
-                                               String primerModelName,
-                                               Map<String,String> contigMap) throws Exception {
-
-        List<Tuple10<String, String, String, Long, String, Long, Long, Long, Double, Double>> mappedReads = new ArrayList<Tuple10<String, String, String, Long, String, Long, Long, Long, Double, Double>>();
+                                               String primerModelName) throws Exception {
+        List<Tuple10<String, String, Long, Long, String, Long, Long, Long, Double, Double>> mappedReads = new ArrayList<Tuple10<String, String, Long, Long, String, Long, Long, Long, Double, Double>>();
         
         MappedReads rv = new MappedReads()
             .withGenome(genomeRef)
@@ -309,6 +307,7 @@ public class TnSeq {
         if (infile==null)
             throw new Exception("failed to open mapped reads output "+mappedReadsFile.getPath());
 
+        int i=0;
         while (infile.ready()) {
             String buffer = infile.readLine();
             if (buffer==null) {
@@ -316,17 +315,19 @@ public class TnSeq {
                 break;
             }
 
+            System.out.println("line "+i);
+
             String[] fields = buffer.split("\t");
             if (fields.length < 3)
                 continue;
 
-            Tuple10<String, String, String, Long, String, Long, Long, Long, Double, Double> mappedRead = new Tuple10<String, String, String, Long, String, Long, Long, Long, Double, Double>();
+            Tuple10<String, String, Long, Long, String, Long, Long, Long, Double, Double> mappedRead = new Tuple10<String, String, Long, Long, String, Long, Long, Long, Double, Double>();
             mappedRead.setE1(fields[0]); // read_name
             mappedRead.setE2(fields[1]); // barcode
 
             // mapped reads past end of transposon don't have all fields
             if ((!fields[2].equals("pastEnd")) && (fields.length > 9)) {
-                mappedRead.setE3(contigMap.get(fields[2])); // contig_ref scaffold
+                mappedRead.setE3(new Long(StringUtil.atol(fields[2])-1000L)); // contig_index
                 mappedRead.setE4(new Long(StringUtil.atol(fields[3]))); // insert_pos
                 mappedRead.setE5(fields[4]); // strand
                 mappedRead.setE6(new Long(StringUtil.atol(fields[5]))); // is_unique
@@ -336,6 +337,13 @@ public class TnSeq {
                 mappedRead.setE10(new Double(StringUtil.atod(fields[9])));; // pct_identity
             }
             mappedReads.add(mappedRead);
+
+            // force GC, since String.split is not well optimized
+            fields = null;
+            /*
+            if (i % 1000 == 0)
+                System.gc();
+            */
         }
         infile.close();
             
@@ -443,8 +451,7 @@ public class TnSeq {
         MappedReads mappedReads = parseMappedReads(inputParams.getInputGenome(),
                                                    inputParams.getInputReadLibrary(),
                                                    mapOutput[0],
-                                                   inputParams.getInputBarcodeModel(),
-                                                   contigMap);
+                                                   inputParams.getInputBarcodeModel());
 
 
         String mappedReadsID = saveMappedReads(wsURL,

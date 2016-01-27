@@ -14,6 +14,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import rbtnseq.*;
+import us.kbase.kbaserbtnseq.*;
 import us.kbase.auth.AuthToken;
 import us.kbase.common.service.JsonServerSyslog;
 import us.kbase.common.service.UObject;
@@ -80,8 +81,8 @@ public class RBTnSeqServerTest {
 
     /**
        test tnseq with some D. vulgaris reads data
-    */
     @Test
+    */
     public void testTnSeq() throws Exception {
         TnSeqInput input = new TnSeqInput()
             .withWs("3262")
@@ -96,6 +97,19 @@ public class RBTnSeqServerTest {
         Assert.assertNotNull(rv);
     }
 
+    /**
+       test loading of MappedReads object
+    */
+    @Test
+    public void testParseMappedReads() throws Exception {
+        MappedReads reads = TnSeq.parseMappedReads(null,
+                                                   null,
+                                                   new File("/kb/module/work/map6575757982934881151.tab"),
+                                                   "model_pKMW7");
+        Assert.assertNotNull(reads);
+        System.out.println("read "+reads.getMappedReads().size()+" mapped read from file");
+    }
+    
     /*    
     @Test
     public void testCountContigs() throws Exception {

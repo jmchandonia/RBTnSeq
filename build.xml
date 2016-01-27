@@ -88,13 +88,14 @@ commit=${git.commit}</echo>
     <property name="jar.absolute.path" location="${dist}/${jar.file}"/>
     <pathconvert targetos="unix" property="lib.classpath" refid="compile.classpath"/>
     <echo file="${bin}/${exec.cmd.file}">#!/bin/sh
-java -cp ${jar.absolute.path}:${lib.classpath} rbtnseq.RBTnSeqServer $1 $2 $3
+java -Xmx2000M -cp ${jar.absolute.path}:${lib.classpath} rbtnseq.RBTnSeqServer $1 $2 $3
     </echo>
     <chmod file="${bin}/${exec.cmd.file}" perm="a+x"/>
   </target>
   
   <target name="test" description="run all tests">
-    <junit printsummary="yes" haltonfailure="yes" fork="true">
+    <junit printsummary="yes" haltonfailure="yes" fork="yes">
+      <jvmarg value="-Xmx2000M" />
       <classpath>
         <pathelement location="${dist}/${jar.file}"/>
         <path refid="compile.classpath"/>

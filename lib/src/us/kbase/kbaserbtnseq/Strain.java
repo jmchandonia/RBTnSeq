@@ -19,13 +19,13 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * it may be:
  *   * derived from another Strain (e.g., as an engineered mutant)
  *   * sequenced
- *   * isolated from a community
  *   * a wild-type example of a Genome
  * If a strain is "wild type" it should have a non-null genome_ref and a
- * null derived_from_strain.  If not wild type, genome_ref should be
- * set to the "original" parent strain in KBase, if it exists, or null
- * if it does not exist or is unknown.
- * @optional description genome derived_from_strain deltas isolated_from
+ * null derived_from_strain.  If not wild type (or otherwise not
+ * characterized), genome_ref should be set to null.  (If genome_ref
+ * were not null, a large pool of mutant strains would have too many references
+ * to the genome in our current data model.)
+ * @optional description genome derived_from_strain deltas
  * </pre>
  * 
  */
@@ -36,8 +36,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "description",
     "genome",
     "derived_from_strain",
-    "deltas",
-    "isolated_from"
+    "deltas"
 })
 public class Strain {
 
@@ -51,8 +50,6 @@ public class Strain {
     private String derivedFromStrain;
     @JsonProperty("deltas")
     private List<Delta> deltas;
-    @JsonProperty("isolated_from")
-    private String isolatedFrom;
     private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 
     @JsonProperty("name")
@@ -130,21 +127,6 @@ public class Strain {
         return this;
     }
 
-    @JsonProperty("isolated_from")
-    public String getIsolatedFrom() {
-        return isolatedFrom;
-    }
-
-    @JsonProperty("isolated_from")
-    public void setIsolatedFrom(String isolatedFrom) {
-        this.isolatedFrom = isolatedFrom;
-    }
-
-    public Strain withIsolatedFrom(String isolatedFrom) {
-        this.isolatedFrom = isolatedFrom;
-        return this;
-    }
-
     @JsonAnyGetter
     public Map<String, Object> getAdditionalProperties() {
         return this.additionalProperties;
@@ -157,7 +139,7 @@ public class Strain {
 
     @Override
     public String toString() {
-        return ((((((((((((((("Strain"+" [name=")+ name)+", description=")+ description)+", genome=")+ genome)+", derivedFromStrain=")+ derivedFromStrain)+", deltas=")+ deltas)+", isolatedFrom=")+ isolatedFrom)+", additionalProperties=")+ additionalProperties)+"]");
+        return ((((((((((((("Strain"+" [name=")+ name)+", description=")+ description)+", genome=")+ genome)+", derivedFromStrain=")+ derivedFromStrain)+", deltas=")+ deltas)+", additionalProperties=")+ additionalProperties)+"]");
     }
 
 }

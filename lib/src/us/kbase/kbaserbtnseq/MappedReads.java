@@ -38,7 +38,7 @@ public class MappedReads {
     @JsonProperty("model")
     private Tuple2 <String, String> model;
     @JsonProperty("mapped_reads")
-    private List<Tuple10 <String, String, String, Long, String, Long, Long, Long, Double, Double>> mappedReads;
+    private List<Tuple10 <String, String, Long, Long, String, Long, Long, Long, Double, Double>> mappedReads;
     private Map<java.lang.String, Object> additionalProperties = new HashMap<java.lang.String, Object>();
 
     @JsonProperty("genome")
@@ -87,16 +87,16 @@ public class MappedReads {
     }
 
     @JsonProperty("mapped_reads")
-    public List<Tuple10 <String, String, String, Long, String, Long, Long, Long, Double, Double>> getMappedReads() {
+    public List<Tuple10 <String, String, Long, Long, String, Long, Long, Long, Double, Double>> getMappedReads() {
         return mappedReads;
     }
 
     @JsonProperty("mapped_reads")
-    public void setMappedReads(List<Tuple10 <String, String, String, Long, String, Long, Long, Long, Double, Double>> mappedReads) {
+    public void setMappedReads(List<Tuple10 <String, String, Long, Long, String, Long, Long, Long, Double, Double>> mappedReads) {
         this.mappedReads = mappedReads;
     }
 
-    public MappedReads withMappedReads(List<Tuple10 <String, String, String, Long, String, Long, Long, Long, Double, Double>> mappedReads) {
+    public MappedReads withMappedReads(List<Tuple10 <String, String, Long, Long, String, Long, Long, Long, Double, Double>> mappedReads) {
         this.mappedReads = mappedReads;
         return this;
     }

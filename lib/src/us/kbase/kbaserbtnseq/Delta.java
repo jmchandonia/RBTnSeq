@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * position and length.  The position of all Deltas should be
  * calculated relative to the parent strain (derived_from_strain), so
  * that the Deltas could be applied in any order.
- * @optional change feature contig sequence position length
+ * @optional change feature contig_index sequence position length
  * </pre>
  * 
  */
@@ -32,7 +32,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "description",
     "change",
     "feature",
-    "contig",
+    "contig_index",
     "sequence",
     "position",
     "length"
@@ -45,8 +45,8 @@ public class Delta {
     private String change;
     @JsonProperty("feature")
     private String feature;
-    @JsonProperty("contig")
-    private String contig;
+    @JsonProperty("contig_index")
+    private Long contigIndex;
     @JsonProperty("sequence")
     private String sequence;
     @JsonProperty("position")
@@ -100,18 +100,18 @@ public class Delta {
         return this;
     }
 
-    @JsonProperty("contig")
-    public String getContig() {
-        return contig;
+    @JsonProperty("contig_index")
+    public Long getContigIndex() {
+        return contigIndex;
     }
 
-    @JsonProperty("contig")
-    public void setContig(String contig) {
-        this.contig = contig;
+    @JsonProperty("contig_index")
+    public void setContigIndex(Long contigIndex) {
+        this.contigIndex = contigIndex;
     }
 
-    public Delta withContig(String contig) {
-        this.contig = contig;
+    public Delta withContigIndex(Long contigIndex) {
+        this.contigIndex = contigIndex;
         return this;
     }
 
@@ -172,7 +172,7 @@ public class Delta {
 
     @Override
     public String toString() {
-        return ((((((((((((((((("Delta"+" [description=")+ description)+", change=")+ change)+", feature=")+ feature)+", contig=")+ contig)+", sequence=")+ sequence)+", position=")+ position)+", length=")+ length)+", additionalProperties=")+ additionalProperties)+"]");
+        return ((((((((((((((((("Delta"+" [description=")+ description)+", change=")+ change)+", feature=")+ feature)+", contigIndex=")+ contigIndex)+", sequence=")+ sequence)+", position=")+ position)+", length=")+ length)+", additionalProperties=")+ additionalProperties)+"]");
     }
 
 }
