@@ -10,14 +10,16 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import us.kbase.common.service.Tuple10;
 import us.kbase.common.service.Tuple2;
 
 
 /**
  * <p>Original spec-file type: MappedReads</p>
  * <pre>
- * A MappedReads object stores the mapping of reads to a genome
+ * A MappedReads object stores the mapping of reads to a genome.
+ * Unique and non-unique reads are stored in arrays indexed using
+ * the contig index.  The last set of reads in each of these arrays
+ * corresponds to "past end" reads.
  * </pre>
  * 
  */
@@ -27,7 +29,8 @@ import us.kbase.common.service.Tuple2;
     "genome",
     "reads",
     "model",
-    "mapped_reads"
+    "unique_reads_by_contig",
+    "nonunique_reads_by_contig"
 })
 public class MappedReads {
 
@@ -37,8 +40,10 @@ public class MappedReads {
     private java.lang.String reads;
     @JsonProperty("model")
     private Tuple2 <String, String> model;
-    @JsonProperty("mapped_reads")
-    private List<Tuple10 <String, String, Long, Long, String, Long, Long, Long, Double, Double>> mappedReads;
+    @JsonProperty("unique_reads_by_contig")
+    private List<List<us.kbase.common.service.Tuple7 <String, String, Long, Long, Long, Double, Double>>> uniqueReadsByContig;
+    @JsonProperty("nonunique_reads_by_contig")
+    private List<List<us.kbase.common.service.Tuple7 <String, String, Long, Long, Long, Double, Double>>> nonuniqueReadsByContig;
     private Map<java.lang.String, Object> additionalProperties = new HashMap<java.lang.String, Object>();
 
     @JsonProperty("genome")
@@ -86,18 +91,33 @@ public class MappedReads {
         return this;
     }
 
-    @JsonProperty("mapped_reads")
-    public List<Tuple10 <String, String, Long, Long, String, Long, Long, Long, Double, Double>> getMappedReads() {
-        return mappedReads;
+    @JsonProperty("unique_reads_by_contig")
+    public List<List<us.kbase.common.service.Tuple7 <String, String, Long, Long, Long, Double, Double>>> getUniqueReadsByContig() {
+        return uniqueReadsByContig;
     }
 
-    @JsonProperty("mapped_reads")
-    public void setMappedReads(List<Tuple10 <String, String, Long, Long, String, Long, Long, Long, Double, Double>> mappedReads) {
-        this.mappedReads = mappedReads;
+    @JsonProperty("unique_reads_by_contig")
+    public void setUniqueReadsByContig(List<List<us.kbase.common.service.Tuple7 <String, String, Long, Long, Long, Double, Double>>> uniqueReadsByContig) {
+        this.uniqueReadsByContig = uniqueReadsByContig;
     }
 
-    public MappedReads withMappedReads(List<Tuple10 <String, String, Long, Long, String, Long, Long, Long, Double, Double>> mappedReads) {
-        this.mappedReads = mappedReads;
+    public MappedReads withUniqueReadsByContig(List<List<us.kbase.common.service.Tuple7 <String, String, Long, Long, Long, Double, Double>>> uniqueReadsByContig) {
+        this.uniqueReadsByContig = uniqueReadsByContig;
+        return this;
+    }
+
+    @JsonProperty("nonunique_reads_by_contig")
+    public List<List<us.kbase.common.service.Tuple7 <String, String, Long, Long, Long, Double, Double>>> getNonuniqueReadsByContig() {
+        return nonuniqueReadsByContig;
+    }
+
+    @JsonProperty("nonunique_reads_by_contig")
+    public void setNonuniqueReadsByContig(List<List<us.kbase.common.service.Tuple7 <String, String, Long, Long, Long, Double, Double>>> nonuniqueReadsByContig) {
+        this.nonuniqueReadsByContig = nonuniqueReadsByContig;
+    }
+
+    public MappedReads withNonuniqueReadsByContig(List<List<us.kbase.common.service.Tuple7 <String, String, Long, Long, Long, Double, Double>>> nonuniqueReadsByContig) {
+        this.nonuniqueReadsByContig = nonuniqueReadsByContig;
         return this;
     }
 
@@ -113,7 +133,7 @@ public class MappedReads {
 
     @Override
     public java.lang.String toString() {
-        return ((((((((((("MappedReads"+" [genome=")+ genome)+", reads=")+ reads)+", model=")+ model)+", mappedReads=")+ mappedReads)+", additionalProperties=")+ additionalProperties)+"]");
+        return ((((((((((((("MappedReads"+" [genome=")+ genome)+", reads=")+ reads)+", model=")+ model)+", uniqueReadsByContig=")+ uniqueReadsByContig)+", nonuniqueReadsByContig=")+ nonuniqueReadsByContig)+", additionalProperties=")+ additionalProperties)+"]");
     }
 
 }

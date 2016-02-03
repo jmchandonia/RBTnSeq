@@ -291,17 +291,33 @@ public class TnSeq {
        make a MappedReads object from the output (.tab file) from
        mapReads
     */
-    public static MappedReads parseMappedReads(String genomeRef,
+    public static MappedReads parseMappedReads(int nContigs,
+                                               String genomeRef,
                                                String readsRef,
                                                File mappedReadsFile,
                                                String primerModelName) throws Exception {
-        List<Tuple10<String, String, Long, Long, String, Long, Long, Long, Double, Double>> mappedReads = new ArrayList<Tuple10<String, String, Long, Long, String, Long, Long, Long, Double, Double>>();
+        List<List<Tuple7<String, String, Long, Long, Long, Double, Double>>> uniqueReadsByContig = new ArrayList<List<Tuple7<String, String, Long, Long, Long, Double, Double>>>();
+        List<List<Tuple7<String, String, Long, Long, Long, Double, Double>>> nonuniqueReadsByContig = new ArrayList<List<Tuple7<String, String, Long, Long, Long, Double, Double>>>();
+        List<Tuple7<String, String, Long, Long, Long, Double, Double>> readSet = null;
+        
+        // add mapped reads arrays for each contig,
+        // plus one extra for "pastEnd" reads
+        for (int i=0; i<=nContigs; i++) {
+            if (i!= nContigs) {
+                // past end reads are all non-unique, so don't need array
+                readSet = new ArrayList<Tuple7<String, String, Long, Long, Long, Double, Double>>();        
+                uniqueReadsByContig.add(readSet);
+            }
+            readSet = new ArrayList<Tuple7<String, String, Long, Long, Long, Double, Double>>();
+            nonuniqueReadsByContig.add(readSet);
+        }
         
         MappedReads rv = new MappedReads()
             .withGenome(genomeRef)
             .withReads(readsRef)
             .withModel(parseModel(primerModelName))
-            .withMappedReads(mappedReads);
+            .withUniqueReadsByContig(uniqueReadsByContig)
+            .withNonuniqueReadsByContig(nonuniqueReadsByContig);
 
         BufferedReader infile = IO.openReader(mappedReadsFile.getPath());
         if (infile==null)
@@ -315,35 +331,54 @@ public class TnSeq {
                 break;
             }
 
-            System.out.println("line "+i);
+            System.err.println("line "+i++);
 
-            String[] fields = buffer.split("\t");
-            if (fields.length < 3)
-                continue;
+            // use StringTokenizer instead of split for performance
+            StringTokenizer st = new StringTokenizer(buffer,"\t");
+            
+            // I'm doing new String(fields[]) below in order
+            // to work around the java bug described here:
+            // http://stackoverflow.com/questions/6056389/java-string-split-memory-leak
 
-            Tuple10<String, String, Long, Long, String, Long, Long, Long, Double, Double> mappedRead = new Tuple10<String, String, Long, Long, String, Long, Long, Long, Double, Double>();
-            mappedRead.setE1(fields[0]); // read_name
-            mappedRead.setE2(fields[1]); // barcode
+            Tuple7<String, String, Long, Long, Long, Double, Double> mappedRead = new Tuple7<String, String, Long, Long, Long, Double, Double>();
+            try {
+                mappedRead.setE1(new String(st.nextToken())); // read_name
+                mappedRead.setE2(new String(st.nextToken())); // barcode
 
-            // mapped reads past end of transposon don't have all fields
-            if ((!fields[2].equals("pastEnd")) && (fields.length > 9)) {
-                mappedRead.setE3(new Long(StringUtil.atol(fields[2])-1000L)); // contig_index
-                mappedRead.setE4(new Long(StringUtil.atol(fields[3]))); // insert_pos
-                mappedRead.setE5(fields[4]); // strand
-                mappedRead.setE6(new Long(StringUtil.atol(fields[5]))); // is_unique
-                mappedRead.setE7(new Long(StringUtil.atol(fields[6]))); // hit_start
-                mappedRead.setE8(new Long(StringUtil.atol(fields[7]))); // hit_end
-                mappedRead.setE9(new Double(StringUtil.atod(fields[8]))); // bit_score
-                mappedRead.setE10(new Double(StringUtil.atod(fields[9])));; // pct_identity
+                // mapped reads past end of transposon don't have all fields
+                String contig = new String(st.nextToken());
+                int contigIndex = nContigs;
+                boolean isUnique = false;
+                if (!contig.equals("pastEnd")) {
+                    contigIndex = StringUtil.atoi(contig)-1000;
+                    mappedRead.setE3(new Long(StringUtil.atol(st.nextToken()))); // insert_pos
+                    boolean isPlusStrand = (st.nextToken().equals("+"));
+                    isUnique = (st.nextToken().equals("1"));
+                    long hitStart = StringUtil.atol(st.nextToken());
+                    long hitEnd = StringUtil.atol(st.nextToken());
+                    if (isPlusStrand) {
+                        mappedRead.setE4(new Long(hitStart));
+                        mappedRead.setE5(new Long(hitEnd));
+                    }
+                    else {
+                        mappedRead.setE4(new Long(hitEnd));
+                        mappedRead.setE5(new Long(hitStart));
+                    }
+                    mappedRead.setE6(new Double(StringUtil.atod(st.nextToken()))); // bit_score
+                    mappedRead.setE7(new Double(StringUtil.atod(st.nextToken())));; // pct_identity
+                }
+
+                if (isUnique)
+                    readSet = uniqueReadsByContig.get(contigIndex);
+                else
+                    readSet = nonuniqueReadsByContig.get(contigIndex);
+
+                readSet.add(mappedRead);
             }
-            mappedReads.add(mappedRead);
-
-            // force GC, since String.split is not well optimized
-            fields = null;
-            /*
-            if (i % 1000 == 0)
-                System.gc();
-            */
+            catch (NoSuchElementException e) {
+                // don't add this read
+                e.printStackTrace(System.err);
+            }
         }
         infile.close();
             
@@ -448,7 +483,8 @@ public class TnSeq {
                                     genomeDir,
                                     inputParams.getInputBarcodeModel());
 
-        MappedReads mappedReads = parseMappedReads(inputParams.getInputGenome(),
+        MappedReads mappedReads = parseMappedReads(contigMap.size(),
+                                                   inputParams.getInputGenome(),
                                                    inputParams.getInputReadLibrary(),
                                                    mapOutput[0],
                                                    inputParams.getInputBarcodeModel());

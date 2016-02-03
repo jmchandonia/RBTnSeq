@@ -102,12 +102,13 @@ public class RBTnSeqServerTest {
     */
     @Test
     public void testParseMappedReads() throws Exception {
-        MappedReads reads = TnSeq.parseMappedReads(null,
+        MappedReads reads = TnSeq.parseMappedReads(2,
+                                                   null,
                                                    null,
                                                    new File("/kb/module/work/map6575757982934881151.tab"),
                                                    "model_pKMW7");
         Assert.assertNotNull(reads);
-        System.out.println("read "+reads.getMappedReads().size()+" mapped read from file");
+        System.out.println("read "+reads.getUniqueReadsByContig().get(0).size()+" mapped unique reads in contig 0 from file");
     }
     
     /*    
