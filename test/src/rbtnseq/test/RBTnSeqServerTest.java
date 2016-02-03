@@ -81,8 +81,8 @@ public class RBTnSeqServerTest {
 
     /**
        test tnseq with some D. vulgaris reads data
-    @Test
     */
+    @Test
     public void testTnSeq() throws Exception {
         TnSeqInput input = new TnSeqInput()
             .withWs("3262")
@@ -99,7 +99,6 @@ public class RBTnSeqServerTest {
 
     /**
        test loading of MappedReads object
-    */
     @Test
     public void testParseMappedReads() throws Exception {
         MappedReads reads = TnSeq.parseMappedReads(2,
@@ -110,6 +109,7 @@ public class RBTnSeqServerTest {
         Assert.assertNotNull(reads);
         System.out.println("read "+reads.getUniqueReadsByContig().get(0).size()+" mapped unique reads in contig 0 from file");
     }
+    */
     
     /*    
     @Test

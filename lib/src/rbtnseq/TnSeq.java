@@ -296,19 +296,19 @@ public class TnSeq {
                                                String readsRef,
                                                File mappedReadsFile,
                                                String primerModelName) throws Exception {
-        List<List<Tuple7<String, String, Long, Long, Long, Double, Double>>> uniqueReadsByContig = new ArrayList<List<Tuple7<String, String, Long, Long, Long, Double, Double>>>();
-        List<List<Tuple7<String, String, Long, Long, Long, Double, Double>>> nonuniqueReadsByContig = new ArrayList<List<Tuple7<String, String, Long, Long, Long, Double, Double>>>();
-        List<Tuple7<String, String, Long, Long, Long, Double, Double>> readSet = null;
+        List<List<Tuple4<String, Long, Long, Long>>> uniqueReadsByContig = new ArrayList<List<Tuple4<String, Long, Long, Long>>>();
+        List<List<Tuple4<String, Long, Long, Long>>> nonuniqueReadsByContig = new ArrayList<List<Tuple4<String, Long, Long, Long>>>();
+        List<Tuple4<String, Long, Long, Long>> readSet = null;
         
         // add mapped reads arrays for each contig,
         // plus one extra for "pastEnd" reads
         for (int i=0; i<=nContigs; i++) {
             if (i!= nContigs) {
                 // past end reads are all non-unique, so don't need array
-                readSet = new ArrayList<Tuple7<String, String, Long, Long, Long, Double, Double>>();        
+                readSet = new ArrayList<Tuple4<String, Long, Long, Long>>();        
                 uniqueReadsByContig.add(readSet);
             }
-            readSet = new ArrayList<Tuple7<String, String, Long, Long, Long, Double, Double>>();
+            readSet = new ArrayList<Tuple4<String, Long, Long, Long>>();
             nonuniqueReadsByContig.add(readSet);
         }
         
@@ -331,7 +331,7 @@ public class TnSeq {
                 break;
             }
 
-            System.err.println("line "+i++);
+            // System.err.println("line "+i++);
 
             // use StringTokenizer instead of split for performance
             StringTokenizer st = new StringTokenizer(buffer,"\t");
@@ -340,10 +340,10 @@ public class TnSeq {
             // to work around the java bug described here:
             // http://stackoverflow.com/questions/6056389/java-string-split-memory-leak
 
-            Tuple7<String, String, Long, Long, Long, Double, Double> mappedRead = new Tuple7<String, String, Long, Long, Long, Double, Double>();
+            Tuple4<String, Long, Long, Long> mappedRead = new Tuple4<String, Long, Long, Long>();
             try {
-                mappedRead.setE1(new String(st.nextToken())); // read_name
-                mappedRead.setE2(new String(st.nextToken())); // barcode
+                st.nextToken(); // ignore read name
+                mappedRead.setE1(new String(st.nextToken())); // barcode
 
                 // mapped reads past end of transposon don't have all fields
                 String contig = new String(st.nextToken());
@@ -351,21 +351,21 @@ public class TnSeq {
                 boolean isUnique = false;
                 if (!contig.equals("pastEnd")) {
                     contigIndex = StringUtil.atoi(contig)-1000;
-                    mappedRead.setE3(new Long(StringUtil.atol(st.nextToken()))); // insert_pos
+                    mappedRead.setE2(new Long(StringUtil.atol(st.nextToken()))); // insert_pos
                     boolean isPlusStrand = (st.nextToken().equals("+"));
                     isUnique = (st.nextToken().equals("1"));
                     long hitStart = StringUtil.atol(st.nextToken());
                     long hitEnd = StringUtil.atol(st.nextToken());
                     if (isPlusStrand) {
-                        mappedRead.setE4(new Long(hitStart));
-                        mappedRead.setE5(new Long(hitEnd));
+                        mappedRead.setE3(new Long(hitStart));
+                        mappedRead.setE4(new Long(hitEnd));
                     }
                     else {
-                        mappedRead.setE4(new Long(hitEnd));
-                        mappedRead.setE5(new Long(hitStart));
+                        mappedRead.setE3(new Long(hitEnd));
+                        mappedRead.setE4(new Long(hitStart));
                     }
-                    mappedRead.setE6(new Double(StringUtil.atod(st.nextToken()))); // bit_score
-                    mappedRead.setE7(new Double(StringUtil.atod(st.nextToken())));; // pct_identity
+                    // ignore bit score
+                    // ignore pct identity
                 }
 
                 if (isUnique)
