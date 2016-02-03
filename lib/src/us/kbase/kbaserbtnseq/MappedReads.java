@@ -10,7 +10,6 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import us.kbase.common.service.Tuple2;
 
 
 /**
@@ -39,11 +38,11 @@ public class MappedReads {
     @JsonProperty("reads")
     private java.lang.String reads;
     @JsonProperty("model")
-    private Tuple2 <String, String> model;
+    private us.kbase.common.service.Tuple2 <String, String> model;
     @JsonProperty("unique_reads_by_contig")
-    private List<List<us.kbase.common.service.Tuple4 <String, Long, Long, Long>>> uniqueReadsByContig;
+    private List<List<us.kbase.common.service.Tuple2 <String, Long>>> uniqueReadsByContig;
     @JsonProperty("nonunique_reads_by_contig")
-    private List<List<us.kbase.common.service.Tuple4 <String, Long, Long, Long>>> nonuniqueReadsByContig;
+    private List<List<us.kbase.common.service.Tuple2 <String, Long>>> nonuniqueReadsByContig;
     private Map<java.lang.String, Object> additionalProperties = new HashMap<java.lang.String, Object>();
 
     @JsonProperty("genome")
@@ -77,46 +76,46 @@ public class MappedReads {
     }
 
     @JsonProperty("model")
-    public Tuple2 <String, String> getModel() {
+    public us.kbase.common.service.Tuple2 <String, String> getModel() {
         return model;
     }
 
     @JsonProperty("model")
-    public void setModel(Tuple2 <String, String> model) {
+    public void setModel(us.kbase.common.service.Tuple2 <String, String> model) {
         this.model = model;
     }
 
-    public MappedReads withModel(Tuple2 <String, String> model) {
+    public MappedReads withModel(us.kbase.common.service.Tuple2 <String, String> model) {
         this.model = model;
         return this;
     }
 
     @JsonProperty("unique_reads_by_contig")
-    public List<List<us.kbase.common.service.Tuple4 <String, Long, Long, Long>>> getUniqueReadsByContig() {
+    public List<List<us.kbase.common.service.Tuple2 <String, Long>>> getUniqueReadsByContig() {
         return uniqueReadsByContig;
     }
 
     @JsonProperty("unique_reads_by_contig")
-    public void setUniqueReadsByContig(List<List<us.kbase.common.service.Tuple4 <String, Long, Long, Long>>> uniqueReadsByContig) {
+    public void setUniqueReadsByContig(List<List<us.kbase.common.service.Tuple2 <String, Long>>> uniqueReadsByContig) {
         this.uniqueReadsByContig = uniqueReadsByContig;
     }
 
-    public MappedReads withUniqueReadsByContig(List<List<us.kbase.common.service.Tuple4 <String, Long, Long, Long>>> uniqueReadsByContig) {
+    public MappedReads withUniqueReadsByContig(List<List<us.kbase.common.service.Tuple2 <String, Long>>> uniqueReadsByContig) {
         this.uniqueReadsByContig = uniqueReadsByContig;
         return this;
     }
 
     @JsonProperty("nonunique_reads_by_contig")
-    public List<List<us.kbase.common.service.Tuple4 <String, Long, Long, Long>>> getNonuniqueReadsByContig() {
+    public List<List<us.kbase.common.service.Tuple2 <String, Long>>> getNonuniqueReadsByContig() {
         return nonuniqueReadsByContig;
     }
 
     @JsonProperty("nonunique_reads_by_contig")
-    public void setNonuniqueReadsByContig(List<List<us.kbase.common.service.Tuple4 <String, Long, Long, Long>>> nonuniqueReadsByContig) {
+    public void setNonuniqueReadsByContig(List<List<us.kbase.common.service.Tuple2 <String, Long>>> nonuniqueReadsByContig) {
         this.nonuniqueReadsByContig = nonuniqueReadsByContig;
     }
 
-    public MappedReads withNonuniqueReadsByContig(List<List<us.kbase.common.service.Tuple4 <String, Long, Long, Long>>> nonuniqueReadsByContig) {
+    public MappedReads withNonuniqueReadsByContig(List<List<us.kbase.common.service.Tuple2 <String, Long>>> nonuniqueReadsByContig) {
         this.nonuniqueReadsByContig = nonuniqueReadsByContig;
         return this;
     }

@@ -296,19 +296,19 @@ public class TnSeq {
                                                String readsRef,
                                                File mappedReadsFile,
                                                String primerModelName) throws Exception {
-        List<List<Tuple4<String, Long, Long, Long>>> uniqueReadsByContig = new ArrayList<List<Tuple4<String, Long, Long, Long>>>();
-        List<List<Tuple4<String, Long, Long, Long>>> nonuniqueReadsByContig = new ArrayList<List<Tuple4<String, Long, Long, Long>>>();
-        List<Tuple4<String, Long, Long, Long>> readSet = null;
+        List<List<Tuple2<String, Long>>> uniqueReadsByContig = new ArrayList<List<Tuple2<String,Long>>>();
+        List<List<Tuple2<String, Long>>> nonuniqueReadsByContig = new ArrayList<List<Tuple2<String,Long>>>();
+        List<Tuple2<String,Long>> readSet = null;
         
         // add mapped reads arrays for each contig,
         // plus one extra for "pastEnd" reads
         for (int i=0; i<=nContigs; i++) {
             if (i!= nContigs) {
                 // past end reads are all non-unique, so don't need array
-                readSet = new ArrayList<Tuple4<String, Long, Long, Long>>();        
+                readSet = new ArrayList<Tuple2<String,Long>>();        
                 uniqueReadsByContig.add(readSet);
             }
-            readSet = new ArrayList<Tuple4<String, Long, Long, Long>>();
+            readSet = new ArrayList<Tuple2<String,Long>>();
             nonuniqueReadsByContig.add(readSet);
         }
         
@@ -340,7 +340,7 @@ public class TnSeq {
             // to work around the java bug described here:
             // http://stackoverflow.com/questions/6056389/java-string-split-memory-leak
 
-            Tuple4<String, Long, Long, Long> mappedRead = new Tuple4<String, Long, Long, Long>();
+            Tuple2<String,Long> mappedRead = new Tuple2<String,Long>();
             try {
                 st.nextToken(); // ignore read name
                 mappedRead.setE1(new String(st.nextToken())); // barcode
@@ -352,18 +352,10 @@ public class TnSeq {
                 if (!contig.equals("pastEnd")) {
                     contigIndex = StringUtil.atoi(contig)-1000;
                     mappedRead.setE2(new Long(StringUtil.atol(st.nextToken()))); // insert_pos
-                    boolean isPlusStrand = (st.nextToken().equals("+"));
+                    st.nextToken(); // ignore strand
                     isUnique = (st.nextToken().equals("1"));
-                    long hitStart = StringUtil.atol(st.nextToken());
-                    long hitEnd = StringUtil.atol(st.nextToken());
-                    if (isPlusStrand) {
-                        mappedRead.setE3(new Long(hitStart));
-                        mappedRead.setE4(new Long(hitEnd));
-                    }
-                    else {
-                        mappedRead.setE3(new Long(hitEnd));
-                        mappedRead.setE4(new Long(hitStart));
-                    }
+                    // ignore hitStart
+                    // ignore hitEnd
                     // ignore bit score
                     // ignore pct identity
                 }
