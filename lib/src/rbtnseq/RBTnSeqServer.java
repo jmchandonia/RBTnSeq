@@ -29,12 +29,14 @@ public class RBTnSeqServer extends JsonServerServlet {
 
     //BEGIN_CLASS_HEADER
     private final String wsUrl;
+    private final String shockUrl;
     //END_CLASS_HEADER
 
     public RBTnSeqServer() throws Exception {
         super("RBTnSeq");
         //BEGIN_CONSTRUCTOR
         wsUrl = config.get("workspace-url");
+        shockUrl = config.get("shock-url");
         //END_CONSTRUCTOR
     }
 
@@ -50,7 +52,7 @@ public class RBTnSeqServer extends JsonServerServlet {
     public String runTnSeq(TnSeqInput inputParams, AuthToken authPart, RpcContext jsonRpcContext) throws Exception {
         String returnVal = null;
         //BEGIN runTnSeq
-        returnVal = TnSeq.run(wsUrl,authPart,inputParams);
+        returnVal = TnSeq.run(wsUrl,shockUrl,authPart,inputParams);
         //END runTnSeq
         return returnVal;
     }

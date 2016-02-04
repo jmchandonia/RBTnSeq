@@ -11,6 +11,7 @@ import us.kbase.auth.AuthService;
 import us.kbase.auth.AuthToken;
 import us.kbase.common.service.*;
 import us.kbase.workspace.*;
+import us.kbase.shock.client.*;
 import us.kbase.kbasegenomes.*;
 import us.kbase.kbaseassembly.*;
 import us.kbase.kbaserbtnseq.*;
@@ -295,29 +296,27 @@ public class TnSeq {
                                                String genomeRef,
                                                String readsRef,
                                                File mappedReadsFile,
+                                               Handle readsFileHandle,
                                                String primerModelName) throws Exception {
-        List<List<Tuple2<String, Long>>> uniqueReadsByContig = new ArrayList<List<Tuple2<String,Long>>>();
-        List<List<Tuple2<String, Long>>> nonuniqueReadsByContig = new ArrayList<List<Tuple2<String,Long>>>();
-        List<Tuple2<String,Long>> readSet = null;
+        List<List<Long>> uniqueInsertPosByContig = new ArrayList<List<Long>>();
+        List<List<Long>> nonuniqueInsertPosByContig = new ArrayList<List<Long>>();
+        List<Long> insertPosSet = null;
         
         // add mapped reads arrays for each contig,
-        // plus one extra for "pastEnd" reads
-        for (int i=0; i<=nContigs; i++) {
-            if (i!= nContigs) {
-                // past end reads are all non-unique, so don't need array
-                readSet = new ArrayList<Tuple2<String,Long>>();        
-                uniqueReadsByContig.add(readSet);
-            }
-            readSet = new ArrayList<Tuple2<String,Long>>();
-            nonuniqueReadsByContig.add(readSet);
+        for (int i=0; i<nContigs; i++) {
+            insertPosSet = new ArrayList<Long>();        
+            uniqueInsertPosByContig.add(insertPosSet);
+            insertPosSet = new ArrayList<Long>();
+            nonuniqueInsertPosByContig.add(insertPosSet);
         }
-        
+
         MappedReads rv = new MappedReads()
             .withGenome(genomeRef)
             .withReads(readsRef)
             .withModel(parseModel(primerModelName))
-            .withUniqueReadsByContig(uniqueReadsByContig)
-            .withNonuniqueReadsByContig(nonuniqueReadsByContig);
+            .withMappedReadsFile(readsFileHandle)
+            .withUniqueInsertPosByContig(uniqueInsertPosByContig)
+            .withNonuniqueInsertPosByContig(nonuniqueInsertPosByContig);
 
         BufferedReader infile = IO.openReader(mappedReadsFile.getPath());
         if (infile==null)
@@ -340,10 +339,10 @@ public class TnSeq {
             // to work around the java bug described here:
             // http://stackoverflow.com/questions/6056389/java-string-split-memory-leak
 
-            Tuple2<String,Long> mappedRead = new Tuple2<String,Long>();
+            long insertPos = -1;
             try {
                 st.nextToken(); // ignore read name
-                mappedRead.setE1(new String(st.nextToken())); // barcode
+                st.nextToken(); // ignore barcode
 
                 // mapped reads past end of transposon don't have all fields
                 String contig = new String(st.nextToken());
@@ -351,7 +350,7 @@ public class TnSeq {
                 boolean isUnique = false;
                 if (!contig.equals("pastEnd")) {
                     contigIndex = StringUtil.atoi(contig)-1000;
-                    mappedRead.setE2(new Long(StringUtil.atol(st.nextToken()))); // insert_pos
+                    insertPos = StringUtil.atol(st.nextToken());
                     st.nextToken(); // ignore strand
                     isUnique = (st.nextToken().equals("1"));
                     // ignore hitStart
@@ -360,12 +359,13 @@ public class TnSeq {
                     // ignore pct identity
                 }
 
-                if (isUnique)
-                    readSet = uniqueReadsByContig.get(contigIndex);
-                else
-                    readSet = nonuniqueReadsByContig.get(contigIndex);
-
-                readSet.add(mappedRead);
+                if (insertPos > -1) {
+                    if (isUnique)
+                        insertPosSet = uniqueInsertPosByContig.get(contigIndex);
+                    else
+                        insertPosSet = nonuniqueInsertPosByContig.get(contigIndex);
+                }
+                insertPosSet.add(new Long(insertPos));
             }
             catch (NoSuchElementException e) {
                 // don't add this read
@@ -448,9 +448,26 @@ public class TnSeq {
     }
 
     /**
+       store a file in shock; returns handle
+    */
+    public static Handle storeShock(String shockURL,
+                                    AuthToken token,
+                                    File f) throws Exception {
+        Handle rv = new Handle().withFileName(f.getName());
+        BasicShockClient shockClient = new BasicShockClient(new URL(shockURL), token);
+        InputStream is = new BufferedInputStream(new FileInputStream(f));
+        ShockNode sn = shockClient.addNode(is,f.getName(),null);
+        is.close();
+        String shockNodeID = sn.getId().getId();
+        rv.setId(shockNodeID);
+        return rv;
+    }
+
+    /**
        runs the whole TnSeq pipeline
     */
     public static String run(String wsURL,
+                             String shockURL,
                              AuthToken token,
                              TnSeqInput inputParams) throws Exception {
 
@@ -475,10 +492,15 @@ public class TnSeq {
                                     genomeDir,
                                     inputParams.getInputBarcodeModel());
 
+        Handle mappedReadsHandle = storeShock(shockURL,
+                                              token,
+                                              mapOutput[0]);
+
         MappedReads mappedReads = parseMappedReads(contigMap.size(),
                                                    inputParams.getInputGenome(),
                                                    inputParams.getInputReadLibrary(),
                                                    mapOutput[0],
+                                                   mappedReadsHandle,
                                                    inputParams.getInputBarcodeModel());
 
 
