@@ -60,7 +60,6 @@ public class TnSeq {
     public static File dumpSEReadsFASTQ(String wsURL,
                                         AuthToken token,
                                         File tempDir,
-                                        String ws,
                                         String readsRef) throws Exception {
         WorkspaceClient wc = createWsClient(wsURL,token);
         ObjectMapper mapper = new ObjectMapper();
@@ -69,7 +68,7 @@ public class TnSeq {
         fastQFile.delete();
 
         try {
-            us.kbase.kbaseassembly.SingleEndLibrary kasl = wc.getObjects(Arrays.asList(new ObjectIdentity().withRef(ws+"/"+readsRef))).get(0).getData().asClassInstance(us.kbase.kbaseassembly.SingleEndLibrary.class);
+            us.kbase.kbaseassembly.SingleEndLibrary kasl = wc.getObjects(Arrays.asList(new ObjectIdentity().withRef(readsRef))).get(0).getData().asClassInstance(us.kbase.kbaseassembly.SingleEndLibrary.class);
             System.out.println("read single-end library as assembly object");
             Handle h = kasl.getHandle();
             String url = h.getUrl()+"/node/"+h.getId()+"?download";
@@ -104,7 +103,6 @@ public class TnSeq {
     public static Tuple2<File,Map<String,String>> dumpGenomeTab(String wsURL,
                                                                 AuthToken token,
                                                                 File tempDir,
-                                                                String ws,
                                                                 String genomeRef) throws Exception {
         WorkspaceClient wc = createWsClient(wsURL,token);
         ObjectMapper mapper = new ObjectMapper();
@@ -118,7 +116,7 @@ public class TnSeq {
         try {
             // first get genome object
             List<ObjectIdentity> objects = new ArrayList<ObjectIdentity>();
-            objects.add(new ObjectIdentity().withRef(ws+"/"+genomeRef));
+            objects.add(new ObjectIdentity().withRef(genomeRef));
             Genome genome = wc.getObjects(objects).get(0).getData().asClassInstance(Genome.class);
             if (genome==null)
                 throw new Exception("Null return error reading genome");
@@ -240,7 +238,8 @@ public class TnSeq {
             reverseContigMap = null;
         }
 
-        Tuple2 rv = new Tuple2<File,Map<String,String>>()
+        Tuple2<File,Map<String,String>> rv =
+            new Tuple2<File,Map<String,String>>()
             .withE1(genomeDir)
             .withE2(reverseContigMap);
         
@@ -285,7 +284,7 @@ public class TnSeq {
             throw new Exception("Barcode model file "+primerModelName+" seems corrupted; should have two lines");
         return new Tuple2<String,String>()
             .withE1(lines.get(0))
-            .withE1(lines.get(1));
+            .withE2(lines.get(1));
     }
 
     /**
@@ -471,19 +470,26 @@ public class TnSeq {
                              AuthToken token,
                              TnSeqInput inputParams) throws Exception {
 
+        // turn local into absolute paths
+        String genomeRef = inputParams.getInputGenome();
+        if (genomeRef.indexOf("/") == -1)
+            genomeRef = inputParams.getWs()+"/"+genomeRef;
+        String readsRef = inputParams.getInputReadLibrary();
+        if (readsRef.indexOf("/") == -1)
+            readsRef = inputParams.getWs()+"/"+readsRef;
+
         String rv = "TnSeq pipeline output:\n";
 
         File readsFile = dumpSEReadsFASTQ(wsURL,
                                           token,
                                           tempDir,
-                                          inputParams.getWs(),
-                                          inputParams.getInputReadLibrary());
+                                          readsRef);
 
         Tuple2<File,Map<String,String>> genomeData = dumpGenomeTab(wsURL,
                                                                    token,
                                                                    tempDir,
-                                                                   inputParams.getWs(),
-                                                                   inputParams.getInputGenome());
+                                                                   genomeRef);
+        
         File genomeDir = genomeData.getE1();
         Map<String,String> contigMap = genomeData.getE2();
 
@@ -497,12 +503,17 @@ public class TnSeq {
                                               mapOutput[0]);
 
         MappedReads mappedReads = parseMappedReads(contigMap.size(),
-                                                   inputParams.getInputGenome(),
-                                                   inputParams.getInputReadLibrary(),
+                                                   genomeRef,
+                                                   readsRef,
                                                    mapOutput[0],
                                                    mappedReadsHandle,
                                                    inputParams.getInputBarcodeModel());
 
+        /*
+        ObjectMapper mapper = new ObjectMapper();
+        File f = new File(tempDir+"/mappedReadsObject.json");
+        mapper.writeValue(f,mappedReads);
+        */
 
         String mappedReadsID = saveMappedReads(wsURL,
                                                token,

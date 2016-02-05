@@ -85,7 +85,7 @@ public class RBTnSeqServerTest {
     @Test
     public void testTnSeq() throws Exception {
         TnSeqInput input = new TnSeqInput()
-            .withWs("3262")
+            .withWs("jmc:1449699355207")
             .withInputReadLibrary("GBVT06H_reads")
             .withInputGenome("kb|g.3562")
             .withInputBarcodeModel("model_pKMW7")
