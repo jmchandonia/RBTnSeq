@@ -96,14 +96,17 @@ public class TnSeq {
     /**
        dumps a Genome object out in FEBA directory format.
 
-       returns tuple2:
-       name of genome directory,
-       and map of fake contig ids to real contig refs
+       returns tuple3:
+       1) name of genome directory,
+       2) map of fake contig ids to real contig refs,
+       3) list of features, tuples of <contig, begin, end, id, alias>
     */
-    public static Tuple2<File,Map<String,String>> dumpGenomeTab(String wsURL,
-                                                                AuthToken token,
-                                                                File tempDir,
-                                                                String genomeRef) throws Exception {
+    public static Tuple3<File,
+        Map<String,String>,
+        ArrayList<Tuple5<Integer,Long,Long,String,String>>> dumpGenomeTab(String wsURL,
+                                                                          AuthToken token,
+                                                                          File tempDir,
+                                                                          String genomeRef) throws Exception {
         WorkspaceClient wc = createWsClient(wsURL,token);
         ObjectMapper mapper = new ObjectMapper();
 
@@ -112,6 +115,7 @@ public class TnSeq {
         genomeDir.mkdir();
 
         HashMap<String,String> reverseContigMap = new HashMap<String,String>();
+        ArrayList<Tuple5<Integer,Long,Long,String,String>> featureList = new ArrayList<Tuple5<Integer,Long,Long,String,String>>();
 
         try {
             // first get genome object
@@ -210,6 +214,14 @@ public class TnSeq {
                 geneCount++;                    
                 tabWriter.println((i+1)+"\tfeat"+(i+1)+"\t"+type+"\t"+contigNum+"\t"+begin+"\t"+end+"\t"+strand+"\t"+alias+"\t"+desc);
 
+                // save it in feature list
+                featureList.add(new Tuple5<Integer,Long,Long,String,String>()
+                                .withE1(contigNum)
+                                .withE2(begin)
+                                .withE3(end)
+                                .withE4(feat.getId())
+                                .withE5(alias));
+
                 // see if feature is a protein.  If so, add to aaseq.
                 seq = feat.getProteinTranslation();
                 if ((seq == null) || (seq.isEmpty()))
@@ -238,10 +250,11 @@ public class TnSeq {
             reverseContigMap = null;
         }
 
-        Tuple2<File,Map<String,String>> rv =
-            new Tuple2<File,Map<String,String>>()
+        Tuple3<File,Map<String,String>,ArrayList<Tuple5<Integer,Long,Long,String,String>>> rv =
+            new Tuple3<File,Map<String,String>,ArrayList<Tuple5<Integer,Long,Long,String,String>>>()
             .withE1(genomeDir)
-            .withE2(reverseContigMap);
+            .withE2(reverseContigMap)
+            .withE3(featureList);
         
         return rv;
     }
@@ -300,7 +313,7 @@ public class TnSeq {
         List<List<Long>> uniqueInsertPosByContig = new ArrayList<List<Long>>();
         List<List<Long>> nonuniqueInsertPosByContig = new ArrayList<List<Long>>();
         List<Long> insertPosSet = null;
-        
+
         // add mapped reads arrays for each contig,
         for (int i=0; i<nContigs; i++) {
             insertPosSet = new ArrayList<Long>();        
@@ -447,6 +460,170 @@ public class TnSeq {
     }
 
     /**
+       find a feature that spans a given position.  Note: very
+       inefficient, but shouldn't be rate-limiting.
+       Returns 0-indexed index into featureList, or -1 if not found.
+    */
+    public static int findFeature(ArrayList<Tuple5<Integer,Long,Long,String,String>> featureList,
+                                  int contigIndex,
+                                  long pos) {
+        for (int i=0; i<featureList.size(); i++) {
+            Tuple5<Integer,Long,Long,String,String> feat = featureList.get(i);
+            if ((feat.getE1().intValue() == contigIndex) &&
+                (feat.getE2().longValue() <= pos) &&
+                (feat.getE3().longValue() >= pos))
+                return i;
+        }
+        return -1;
+    }
+
+    /**
+       make a Pool object from the output (.pool file) from
+       designRandomPool
+    */
+    public static Pool parsePool(ArrayList<Tuple5<Integer,Long,Long,String,String>> featureList,
+                                 String genomeRef,
+                                 String mappedReadsRef,
+                                 File poolFile,
+                                 Handle poolHandle,
+                                 Handle poolHitHandle,
+                                 Handle poolUnhitHandle,
+                                 Handle poolSurpriseHandle) throws Exception {
+
+        List<Strain> strains = new ArrayList<Strain>();
+        List<Long> counts = new ArrayList<Long>();
+        
+        Pool rv = new Pool()
+            .withGenome(genomeRef)
+            .withMappedReads(mappedReadsRef)
+            .withPoolFile(poolHandle)
+            .withPoolHitFile(poolHitHandle)
+            .withPoolUnhitFile(poolUnhitHandle)
+            .withPoolSurpriseFile(poolSurpriseHandle)
+            .withStrains(strains)
+            .withCounts(counts);
+
+        BufferedReader infile = IO.openReader(poolFile.getPath());
+        if (infile==null)
+            throw new Exception("failed to open pool output "+poolFile.getPath());
+
+        int i=0;
+        while (infile.ready()) {
+            i++;
+            
+            String buffer = infile.readLine();
+            if (buffer==null) {
+                infile.close();
+                break;
+            }
+
+            // System.err.println("line "+i);
+
+            // use StringTokenizer instead of split for performance
+            StringTokenizer st = new StringTokenizer(buffer,"\t");
+            
+            long insertPos = -1;
+            try {
+                String barcode = st.nextToken();
+                String rcBarcode = st.nextToken();
+                st.nextToken(); // ignore nTot
+                long n1 = StringUtil.atol(st.nextToken());
+                String contig = st.nextToken();
+                if (contig.equals("pastEnd"))
+                    continue; // skip pool members past end of contigs
+
+                List<Delta> deltas = new ArrayList<Delta>();
+
+                Delta d = new Delta()
+                    .withChange("insertion")
+                    .withContigIndex(new Long(StringUtil.atol(contig)-1000L));
+                    
+                String strand = st.nextToken();
+                if (strand.equals("+")) {
+                    d.setDescription("barcode");
+                    d.setSequence(new String(barcode));
+                }
+                else {
+                    d.setDescription("rcBarcode");
+                    d.setSequence(new String(rcBarcode));
+                }
+                d.setPosition(new Long(StringUtil.atol(st.nextToken())));
+                d.setLength(new Long(d.getSequence().length()));
+
+                // ignore pos2
+
+                // save barcode delta
+                deltas.add(d);
+
+                Strain s = new Strain()
+                    .withName("S"+i)
+                    .withDeltas(deltas);
+                
+                // and add phenotype delta showing gene disrupted, if any
+                int featureIndex = findFeature(featureList,
+                                               (int)(d.getContigIndex().longValue()),
+                                               d.getPosition().longValue());
+                if (featureIndex != -1) {
+                    d = new Delta()
+                        .withDescription("phenotype")
+                        .withChange("deletion")
+                        .withFeature(featureList.get(featureIndex).getE4());
+                    deltas.add(d);
+                    String alias = featureList.get(featureIndex).getE5();
+                    if ((alias != null) &&
+                        (alias.length() > 0))
+                        s.setDescription("delta "+alias);
+                }
+
+                strains.add(s);
+                counts.add(new Long(n1));
+            }
+            catch (NoSuchElementException e) {
+                // don't add this read
+                e.printStackTrace(System.err);
+            }
+        }
+        infile.close();
+            
+        return rv;
+    }
+
+    /**
+       save pool to workspace, with provenance.
+       returns ref
+    */
+    public static String savePool(String wsURL,
+                                  AuthToken token,
+                                  String ws,
+                                  String id,
+                                  Pool pool,
+                                  String methodName,
+                                  List<UObject> methodParams) throws Exception {
+
+        WorkspaceClient wc = createWsClient(wsURL,token);
+
+        // to get service version:
+        RBTnSeqServer server = new RBTnSeqServer();
+        
+        ObjectSaveData data = new ObjectSaveData()
+            .withData(new UObject(pool))
+            .withType("KBaseRBTnSeq.Pool")
+            .withProvenance(Arrays.asList(new ProvenanceAction()
+                                          .withDescription("TnSeq pool")
+                                          .withService("RBTnSeq")
+                                          .withServiceVer(server.version(null))
+                                          .withMethod(methodName)
+                                          .withMethodParams(methodParams)));
+        try {
+            long objid = Long.parseLong(id);
+            data.withObjid(objid);
+        } catch (NumberFormatException ex) {
+            data.withName(id);
+        }
+        return getRefFromObjectInfo(wc.saveObjects(new SaveObjectsParams().withWorkspace(ws).withObjects(Arrays.asList(data))).get(0));
+    }
+
+    /**
        store a file in shock; returns handle
     */
     public static Handle storeShock(String shockURL,
@@ -485,13 +662,17 @@ public class TnSeq {
                                           tempDir,
                                           readsRef);
 
-        Tuple2<File,Map<String,String>> genomeData = dumpGenomeTab(wsURL,
-                                                                   token,
-                                                                   tempDir,
-                                                                   genomeRef);
+        Tuple3<File,
+            Map<String,String>,
+            ArrayList<Tuple5<Integer,Long,Long,String,String>>> genomeData =
+            dumpGenomeTab(wsURL,
+                          token,
+                          tempDir,
+                          genomeRef);
         
         File genomeDir = genomeData.getE1();
         Map<String,String> contigMap = genomeData.getE2();
+        ArrayList<Tuple5<Integer,Long,Long,String,String>> featureList = genomeData.getE3();
 
         File[] mapOutput = mapReads(tempDir,
                                     readsFile,
@@ -515,13 +696,13 @@ public class TnSeq {
         mapper.writeValue(f,mappedReads);
         */
 
-        String mappedReadsID = saveMappedReads(wsURL,
-                                               token,
-                                               inputParams.getWs(),
-                                               inputParams.getOutputMappedReads(),
-                                               mappedReads,
-                                               "TnSeq.run",
-                                               Arrays.asList(new UObject(inputParams)));
+        String mappedReadsRef = saveMappedReads(wsURL,
+                                                token,
+                                                inputParams.getWs(),
+                                                inputParams.getOutputMappedReads(),
+                                                mappedReads,
+                                                "TnSeq.run",
+                                                Arrays.asList(new UObject(inputParams)));
 
         rv += "---\nStep 1: Read mapping output:\n";
         List<String> lines = Files.readAllLines(Paths.get(mapOutput[1].getPath()), Charset.defaultCharset());
@@ -535,6 +716,47 @@ public class TnSeq {
                                              mapOutput[0],
                                              new File(genomeDir+"/genes.tab"),
                                              inputParams.getInputMinN().longValue());
+
+        Handle poolHandle = storeShock(shockURL,
+                                       token,
+                                       poolOutput[0]);
+
+        File f;
+        Handle poolHitHandle = null;
+        f = new File(poolOutput[0]+".hit");
+        if (f.exists())
+            poolHitHandle = storeShock(shockURL,
+                                       token,
+                                       f);
+        Handle poolUnhitHandle = null;
+        f = new File(poolOutput[0]+".unhit");
+        if (f.exists())
+            poolUnhitHandle = storeShock(shockURL,
+                                         token,
+                                         f);
+        Handle poolSurpriseHandle = null;
+        f = new File(poolOutput[0]+".surprise");
+        if (f.exists())
+            poolSurpriseHandle = storeShock(shockURL,
+                                            token,
+                                            f);
+        
+        Pool pool = parsePool(featureList,
+                              genomeRef,
+                              mappedReadsRef,
+                              poolOutput[0],
+                              poolHandle,
+                              poolHitHandle,
+                              poolUnhitHandle,
+                              poolSurpriseHandle);
+
+        String poolRef = savePool(wsURL,
+                                  token,
+                                  inputParams.getWs(),
+                                  inputParams.getOutputPool(),
+                                  pool,
+                                  "TnSeq.run",
+                                  Arrays.asList(new UObject(inputParams)));
 
         rv += "\n---\n\nStep 2: TnSeq pool construction output:\n";
         lines = Files.readAllLines(Paths.get(poolOutput[1].getPath()), Charset.defaultCharset());
