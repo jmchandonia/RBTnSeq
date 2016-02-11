@@ -1,0 +1,63 @@
+{
+    "ver": "0.0.1",
+    
+    "authors": [
+	"jmc"
+    ],
+    "contact": "help@kbase.us",
+    "visible": true,
+    "categories": ["active"],
+    "widgets": {
+	"input": null,
+	"output": null
+    },
+    "parameters": [ 
+	{
+	    "id": "input_pool",
+	    "optional": false,
+	    "advanced": false,
+	    "allow_multiple": false,
+	    "default_values": [ "" ],
+	    "field_type": "text",
+	    "text_options": {
+		"valid_ws_types": ["KBaseRBTnSeq.Pool"]
+	    }
+	},
+	{
+	    "id": "output_feature_set",
+	    "optional": false,
+	    "advanced": false,
+	    "allow_multiple": false,
+	    "default_values": [ "" ],
+	    "field_type": "text"
+	}
+    ],    
+    "behavior": {
+	"service-mapping": {
+	    "url": "",
+	    "name": "RBTnSeq",
+	    "method": "getEssentialGenes",
+	    "input_mapping": [
+		{
+		    "narrative_system_variable": "workspace",
+		    "target_property": "ws"
+		},
+		{
+		    "input_parameter": "input_pool",
+		    "target_property": "input_pool"
+		},
+		{
+		    "input_parameter": "output_feature_set",
+		    "target_property": "output_feature_set"
+		}
+	    ],
+	    "output_mapping": [
+		{
+		    "service_method_output_path": [0],
+		    "target_property": "output"
+		}
+	    ]
+	}
+    },
+    "job_id_output_field": "docker"
+}

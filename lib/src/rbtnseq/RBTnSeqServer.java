@@ -45,15 +45,32 @@ public class RBTnSeqServer extends JsonServerServlet {
      * <pre>
      * runs TnSeq part of pipeline
      * </pre>
-     * @param   inputParams   instance of type {@link rbtnseq.TnSeqInput TnSeqInput}
-     * @return   parameter "report" of String
+     * @param   input   instance of type {@link rbtnseq.TnSeqInput TnSeqInput}
+     * @return   parameter "output" of type {@link rbtnseq.TnSeqOutput TnSeqOutput}
      */
     @JsonServerMethod(rpc = "RBTnSeq.runTnSeq", async=true)
-    public String runTnSeq(TnSeqInput inputParams, AuthToken authPart, RpcContext jsonRpcContext) throws Exception {
-        String returnVal = null;
+    public TnSeqOutput runTnSeq(TnSeqInput input, AuthToken authPart, RpcContext jsonRpcContext) throws Exception {
+        TnSeqOutput returnVal = null;
         //BEGIN runTnSeq
-        returnVal = TnSeq.run(wsUrl,shockUrl,authPart,inputParams);
+        returnVal = TnSeq.run(wsUrl,shockUrl,authPart,input);
         //END runTnSeq
+        return returnVal;
+    }
+
+    /**
+     * <p>Original spec-file function name: getEssentialGenes</p>
+     * <pre>
+     * gets list of essential (un-hit) genes from a Pool
+     * </pre>
+     * @param   input   instance of type {@link rbtnseq.EssentialGenesInput EssentialGenesInput}
+     * @return   parameter "output" of type {@link rbtnseq.EssentialGenesOutput EssentialGenesOutput}
+     */
+    @JsonServerMethod(rpc = "RBTnSeq.getEssentialGenes", async=true)
+    public EssentialGenesOutput getEssentialGenes(EssentialGenesInput input, AuthToken authPart, RpcContext jsonRpcContext) throws Exception {
+        EssentialGenesOutput returnVal = null;
+        //BEGIN getEssentialGenes
+        returnVal = TnSeq.getEssentialGenes(wsUrl,shockUrl,authPart,input);
+        //END getEssentialGenes
         return returnVal;
     }
 

@@ -145,16 +145,34 @@ public class RBTnSeqClient {
      * <pre>
      * runs TnSeq part of pipeline
      * </pre>
-     * @param   inputParams   instance of type {@link rbtnseq.TnSeqInput TnSeqInput}
-     * @return   parameter "report" of String
+     * @param   input   instance of type {@link rbtnseq.TnSeqInput TnSeqInput}
+     * @return   parameter "output" of type {@link rbtnseq.TnSeqOutput TnSeqOutput}
      * @throws IOException if an IO exception occurs
      * @throws JsonClientException if a JSON RPC exception occurs
      */
-    public String runTnSeq(TnSeqInput inputParams, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
+    public TnSeqOutput runTnSeq(TnSeqInput input, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
         List<Object> args = new ArrayList<Object>();
-        args.add(inputParams);
-        TypeReference<List<String>> retType = new TypeReference<List<String>>() {};
-        List<String> res = caller.jsonrpcCall("RBTnSeq.runTnSeq", args, retType, true, true, jsonRpcContext);
+        args.add(input);
+        TypeReference<List<TnSeqOutput>> retType = new TypeReference<List<TnSeqOutput>>() {};
+        List<TnSeqOutput> res = caller.jsonrpcCall("RBTnSeq.runTnSeq", args, retType, true, true, jsonRpcContext);
+        return res.get(0);
+    }
+
+    /**
+     * <p>Original spec-file function name: getEssentialGenes</p>
+     * <pre>
+     * gets list of essential (un-hit) genes from a Pool
+     * </pre>
+     * @param   input   instance of type {@link rbtnseq.EssentialGenesInput EssentialGenesInput}
+     * @return   parameter "output" of type {@link rbtnseq.EssentialGenesOutput EssentialGenesOutput}
+     * @throws IOException if an IO exception occurs
+     * @throws JsonClientException if a JSON RPC exception occurs
+     */
+    public EssentialGenesOutput getEssentialGenes(EssentialGenesInput input, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
+        List<Object> args = new ArrayList<Object>();
+        args.add(input);
+        TypeReference<List<EssentialGenesOutput>> retType = new TypeReference<List<EssentialGenesOutput>>() {};
+        List<EssentialGenesOutput> res = caller.jsonrpcCall("RBTnSeq.getEssentialGenes", args, retType, true, true, jsonRpcContext);
         return res.get(0);
     }
 

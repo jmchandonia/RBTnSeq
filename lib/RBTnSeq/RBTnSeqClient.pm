@@ -105,7 +105,7 @@ sub new
 
 =head2 runTnSeq
 
-  $report = $obj->runTnSeq($input_params)
+  $output = $obj->runTnSeq($input)
 
 =over 4
 
@@ -114,8 +114,8 @@ sub new
 =begin html
 
 <pre>
-$input_params is a RBTnSeq.TnSeqInput
-$report is a string
+$input is a RBTnSeq.TnSeqInput
+$output is a RBTnSeq.TnSeqOutput
 TnSeqInput is a reference to a hash where the following keys are defined:
 	ws has a value which is a string
 	input_read_library has a value which is a string
@@ -124,6 +124,9 @@ TnSeqInput is a reference to a hash where the following keys are defined:
 	input_minN has a value which is an int
 	output_mapped_reads has a value which is a string
 	output_pool has a value which is a string
+TnSeqOutput is a reference to a hash where the following keys are defined:
+	report_name has a value which is a string
+	report_ref has a value which is a string
 
 </pre>
 
@@ -131,8 +134,8 @@ TnSeqInput is a reference to a hash where the following keys are defined:
 
 =begin text
 
-$input_params is a RBTnSeq.TnSeqInput
-$report is a string
+$input is a RBTnSeq.TnSeqInput
+$output is a RBTnSeq.TnSeqOutput
 TnSeqInput is a reference to a hash where the following keys are defined:
 	ws has a value which is a string
 	input_read_library has a value which is a string
@@ -141,6 +144,9 @@ TnSeqInput is a reference to a hash where the following keys are defined:
 	input_minN has a value which is an int
 	output_mapped_reads has a value which is a string
 	output_pool has a value which is a string
+TnSeqOutput is a reference to a hash where the following keys are defined:
+	report_name has a value which is a string
+	report_ref has a value which is a string
 
 
 =end text
@@ -165,10 +171,10 @@ runs TnSeq part of pipeline
 							       "Invalid argument count for function runTnSeq (received $n, expecting 1)");
     }
     {
-	my($input_params) = @args;
+	my($input) = @args;
 
 	my @_bad_arguments;
-        (ref($input_params) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input_params\" (value was \"$input_params\")");
+        (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
         if (@_bad_arguments) {
 	    my $msg = "Invalid arguments passed to runTnSeq:\n" . join("", map { "\t$_\n" } @_bad_arguments);
 	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
@@ -194,6 +200,105 @@ runs TnSeq part of pipeline
         Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method runTnSeq",
 					    status_line => $self->{client}->status_line,
 					    method_name => 'runTnSeq',
+				       );
+    }
+}
+ 
+
+
+=head2 getEssentialGenes
+
+  $output = $obj->getEssentialGenes($input)
+
+=over 4
+
+=item Parameter and return types
+
+=begin html
+
+<pre>
+$input is a RBTnSeq.EssentialGenesInput
+$output is a RBTnSeq.EssentialGenesOutput
+EssentialGenesInput is a reference to a hash where the following keys are defined:
+	ws has a value which is a string
+	input_pool has a value which is a string
+	output_feature_set has a value which is a string
+EssentialGenesOutput is a reference to a hash where the following keys are defined:
+	output_feature_set has a value which is a RBTnSeq.ws_featureset_id
+	report_name has a value which is a string
+	report_ref has a value which is a string
+ws_featureset_id is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+$input is a RBTnSeq.EssentialGenesInput
+$output is a RBTnSeq.EssentialGenesOutput
+EssentialGenesInput is a reference to a hash where the following keys are defined:
+	ws has a value which is a string
+	input_pool has a value which is a string
+	output_feature_set has a value which is a string
+EssentialGenesOutput is a reference to a hash where the following keys are defined:
+	output_feature_set has a value which is a RBTnSeq.ws_featureset_id
+	report_name has a value which is a string
+	report_ref has a value which is a string
+ws_featureset_id is a string
+
+
+=end text
+
+=item Description
+
+gets list of essential (un-hit) genes from a Pool
+
+=back
+
+=cut
+
+ sub getEssentialGenes
+{
+    my($self, @args) = @_;
+
+# Authentication: required
+
+    if ((my $n = @args) != 1)
+    {
+	Bio::KBase::Exceptions::ArgumentValidationError->throw(error =>
+							       "Invalid argument count for function getEssentialGenes (received $n, expecting 1)");
+    }
+    {
+	my($input) = @args;
+
+	my @_bad_arguments;
+        (ref($input) eq 'HASH') or push(@_bad_arguments, "Invalid type for argument 1 \"input\" (value was \"$input\")");
+        if (@_bad_arguments) {
+	    my $msg = "Invalid arguments passed to getEssentialGenes:\n" . join("", map { "\t$_\n" } @_bad_arguments);
+	    Bio::KBase::Exceptions::ArgumentValidationError->throw(error => $msg,
+								   method_name => 'getEssentialGenes');
+	}
+    }
+
+    my $result = $self->{client}->call($self->{url}, $self->{headers}, {
+	method => "RBTnSeq.getEssentialGenes",
+	params => \@args,
+    });
+    if ($result) {
+	if ($result->is_error) {
+	    Bio::KBase::Exceptions::JSONRPC->throw(error => $result->error_message,
+					       code => $result->content->{error}->{code},
+					       method_name => 'getEssentialGenes',
+					       data => $result->content->{error}->{error} # JSON::RPC::ReturnObject only supports JSONRPC 1.1 or 1.O
+					      );
+	} else {
+	    return wantarray ? @{$result->result} : $result->result->[0];
+	}
+    } else {
+        Bio::KBase::Exceptions::HTTP->throw(error => "Error invoking method getEssentialGenes",
+					    status_line => $self->{client}->status_line,
+					    method_name => 'getEssentialGenes',
 				       );
     }
 }
@@ -365,6 +470,153 @@ input_barcode_model has a value which is a string
 input_minN has a value which is an int
 output_mapped_reads has a value which is a string
 output_pool has a value which is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 TnSeqOutput
+
+=over 4
+
+
+
+=item Description
+
+Output from TnSeq is just a string report
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+report_name has a value which is a string
+report_ref has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+report_name has a value which is a string
+report_ref has a value which is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 EssentialGenesInput
+
+=over 4
+
+
+
+=item Description
+
+Inputs to getEssentialGenes
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+ws has a value which is a string
+input_pool has a value which is a string
+output_feature_set has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+ws has a value which is a string
+input_pool has a value which is a string
+output_feature_set has a value which is a string
+
+
+=end text
+
+=back
+
+
+
+=head2 ws_featureset_id
+
+=over 4
+
+
+
+=item Description
+
+The workspace ID of a FeatureSet data object.
+@id ws KBaseCollections.FeatureSet
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a string
+</pre>
+
+=end html
+
+=begin text
+
+a string
+
+=end text
+
+=back
+
+
+
+=head2 EssentialGenesOutput
+
+=over 4
+
+
+
+=item Description
+
+getEssentialGenes outputs a report and a FeatureSet
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a reference to a hash where the following keys are defined:
+output_feature_set has a value which is a RBTnSeq.ws_featureset_id
+report_name has a value which is a string
+report_ref has a value which is a string
+
+</pre>
+
+=end html
+
+=begin text
+
+a reference to a hash where the following keys are defined:
+output_feature_set has a value which is a RBTnSeq.ws_featureset_id
+report_name has a value which is a string
+report_ref has a value which is a string
 
 
 =end text

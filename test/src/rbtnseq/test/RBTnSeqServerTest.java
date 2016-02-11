@@ -81,8 +81,8 @@ public class RBTnSeqServerTest {
 
     /**
        test tnseq with some D. vulgaris reads data
-    */
     @Test
+    */
     public void testTnSeq() throws Exception {
         TnSeqInput input = new TnSeqInput()
             .withWs("jmc:1449699355207")
@@ -92,9 +92,9 @@ public class RBTnSeqServerTest {
             .withInputMinN(10L)
             .withOutputMappedReads("test_mapped_reads")
             .withOutputPool("test_pool");
-        String rv = impl.runTnSeq(input, token, (RpcContext)null);
-        System.out.println("tnseq test returned "+rv);
+        TnSeqOutput rv = impl.runTnSeq(input, token, (RpcContext)null);
         Assert.assertNotNull(rv);
+        System.out.println("tnseq report "+rv.getReportRef());
     }
 
     /**
@@ -110,6 +110,20 @@ public class RBTnSeqServerTest {
         System.out.println("read "+reads.getUniqueReadsByContig().get(0).size()+" mapped unique reads in contig 0 from file");
     }
     */
+
+    /**
+       test essential genes
+    */
+    @Test
+    public void testEssentialGenes() throws Exception {
+        EssentialGenesInput input = new EssentialGenesInput()
+            .withWs("jmc:1449699355207")
+            .withInputPool("test_pool")
+            .withOutputFeatureSet("test_feature_set");
+        EssentialGenesOutput rv = impl.getEssentialGenes(input, token, (RpcContext)null);
+        Assert.assertNotNull(rv);
+        System.out.println("essential genes report "+rv.getReportRef());
+    }
     
     /*    
     @Test

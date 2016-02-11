@@ -17,9 +17,38 @@ module RBTnSeq {
             string output_pool;
 	} TnSeqInput;
 
-	/* runs TnSeq part of pipeline */
-	funcdef runTnSeq(TnSeqInput input_params) returns (string report) authentication required;
+	/* Output from TnSeq is just a string report */
+	typedef structure {
+	    string report_name;
+	    string report_ref;
+	} TnSeqOutput;
 
-       /* returns version number of service */
-       funcdef version() returns (string version);
+	/* runs TnSeq part of pipeline */
+	funcdef runTnSeq(TnSeqInput input) returns (TnSeqOutput output) authentication required;
+
+        /* Inputs to getEssentialGenes */
+        typedef structure {
+	    string ws;
+	    string input_pool;
+	    string output_feature_set;
+	} EssentialGenesInput;
+	
+        /* 
+	    The workspace ID of a FeatureSet data object.
+	    @id ws KBaseCollections.FeatureSet
+        */
+	typedef string ws_featureset_id;
+
+	/* getEssentialGenes outputs a report and a FeatureSet */
+	typedef structure {
+	    ws_featureset_id output_feature_set;
+	    string report_name;
+	    string report_ref;
+	} EssentialGenesOutput;
+
+        /* gets list of essential (un-hit) genes from a Pool */
+        funcdef getEssentialGenes(EssentialGenesInput input) returns (EssentialGenesOutput output) authentication required;
+
+        /* returns version number of service */
+        funcdef version() returns (string version);
 };

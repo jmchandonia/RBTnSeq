@@ -15,6 +15,8 @@ import us.kbase.shock.client.*;
 import us.kbase.kbasegenomes.*;
 import us.kbase.kbaseassembly.*;
 import us.kbase.kbaserbtnseq.*;
+import us.kbase.kbasereport.*;
+import us.kbase.kbasecollections.*;
 import us.kbase.common.utils.FastaWriter;
 
 import com.fasterxml.jackson.databind.*;
@@ -29,8 +31,6 @@ import static java.lang.ProcessBuilder.Redirect;
    This class runs TnSeq, which maps reads to a genome
 */
 public class TnSeq {
-    protected static File tempDir = new File("/kb/module/work/");
-
     /**
        creates a workspace client; if token is null, client can
        only read public workspaces.
@@ -57,11 +57,9 @@ public class TnSeq {
     /**
        dumps a (single end) reads object out in fastQ.gz format.  
     */
-    public static File dumpSEReadsFASTQ(String wsURL,
-                                        AuthToken token,
+    public static File dumpSEReadsFASTQ(WorkspaceClient wc,
                                         File tempDir,
                                         String readsRef) throws Exception {
-        WorkspaceClient wc = createWsClient(wsURL,token);
         ObjectMapper mapper = new ObjectMapper();
 
         File fastQFile = File.createTempFile("reads", ".fastq.gz", tempDir);
@@ -69,11 +67,12 @@ public class TnSeq {
 
         try {
             us.kbase.kbaseassembly.SingleEndLibrary kasl = wc.getObjects(Arrays.asList(new ObjectIdentity().withRef(readsRef))).get(0).getData().asClassInstance(us.kbase.kbaseassembly.SingleEndLibrary.class);
-            System.out.println("read single-end library as assembly object");
+            // System.out.println("read single-end library as assembly object");
             Handle h = kasl.getHandle();
             String url = h.getUrl()+"/node/"+h.getId()+"?download";
 
             // needs authenticated shock download
+            AuthToken token = wc.getToken();
             ProcessBuilder pb =
                 new ProcessBuilder("/bin/bash",
                                    "-c",
@@ -100,19 +99,23 @@ public class TnSeq {
        1) name of genome directory,
        2) map of fake contig ids to real contig refs,
        3) list of features, tuples of <contig, begin, end, id, alias>
+
+       If tempDir is null, doesn't create any files, but just returns
+       the contig/feature maps.
     */
     public static Tuple3<File,
         Map<String,String>,
-        ArrayList<Tuple5<Integer,Long,Long,String,String>>> dumpGenomeTab(String wsURL,
-                                                                          AuthToken token,
+        ArrayList<Tuple5<Integer,Long,Long,String,String>>> dumpGenomeTab(WorkspaceClient wc,
                                                                           File tempDir,
                                                                           String genomeRef) throws Exception {
-        WorkspaceClient wc = createWsClient(wsURL,token);
         ObjectMapper mapper = new ObjectMapper();
 
-        File genomeDir = File.createTempFile("genome", "", tempDir);
-        genomeDir.delete();
-        genomeDir.mkdir();
+        File genomeDir = null;
+        if (tempDir != null) {
+            File.createTempFile("genome", "", tempDir);
+            genomeDir.delete();
+            genomeDir.mkdir();
+        }
 
         HashMap<String,String> reverseContigMap = new HashMap<String,String>();
         ArrayList<Tuple5<Integer,Long,Long,String,String>> featureList = new ArrayList<Tuple5<Integer,Long,Long,String,String>>();
@@ -137,7 +140,10 @@ public class TnSeq {
             cs = null;
 
             // genome.fna = nucleic acid seq for each contig
-            FastaWriter fw = new FastaWriter(new File(genomeDir+"/genome.fna"));
+            FastaWriter fw = null;
+            if (genomeDir != null)
+                fw = new FastaWriter(new File(genomeDir+"/genome.fna"));
+            
             List<String> contigs = genome.getContigIds();
             if (contigs==null)
                 throw new Exception("No contig IDs defined for this genome");
@@ -146,17 +152,23 @@ public class TnSeq {
             for (int i=0; i<nContigs; i++) {
                 String contigID = contigs.get(i);
                 String seq = contigSeqs.get(contigID);
-                fw.write(""+(i+1000), seq.toUpperCase());
+                if (fw != null)
+                    fw.write(""+(i+1000), seq.toUpperCase());
                 contigMap.put(contigID, new Integer(i+1000));
                 reverseContigMap.put(""+(i+1000), contigID);
             }
-            fw.close();
+            if (fw != null)
+                fw.close();
 
             // aaseq = protein seq for each feature
             // genes.tab = location and description of features
-            fw = new FastaWriter(new File(genomeDir+"/aaseq"));
-            PrintWriter tabWriter = new PrintWriter(new File(genomeDir+"/genes.tab"));
-            tabWriter.println("locusId\tsysName\ttype\tscaffoldId\tbegin\tend\tstrand\tname\tdesc");
+
+            PrintWriter tabWriter = null;
+            if (genomeDir != null) {
+                fw = new FastaWriter(new File(genomeDir+"/aaseq"));
+                tabWriter = new PrintWriter(new File(genomeDir+"/genes.tab"));
+                tabWriter.println("locusId\tsysName\ttype\tscaffoldId\tbegin\tend\tstrand\tname\tdesc");
+            }
             List<Feature> features = genome.getFeatures();
             if (features==null)
                 throw new Exception("No features defined for this genome");
@@ -211,8 +223,9 @@ public class TnSeq {
                     continue;
 
                 // we have a called gene
-                geneCount++;                    
-                tabWriter.println((i+1)+"\tfeat"+(i+1)+"\t"+type+"\t"+contigNum+"\t"+begin+"\t"+end+"\t"+strand+"\t"+alias+"\t"+desc);
+                geneCount++;
+                if (tabWriter != null)
+                    tabWriter.println((i+1)+"\tfeat"+(i+1)+"\t"+type+"\t"+contigNum+"\t"+begin+"\t"+end+"\t"+strand+"\t"+alias+"\t"+desc);
 
                 // save it in feature list
                 featureList.add(new Tuple5<Integer,Long,Long,String,String>()
@@ -226,21 +239,26 @@ public class TnSeq {
                 seq = feat.getProteinTranslation();
                 if ((seq == null) || (seq.isEmpty()))
                     continue;
-                fw.write(""+i, seq);
+                if (fw != null)
+                    fw.write(""+i, seq);
             }
-            tabWriter.close();
-            fw.close();
+            if (tabWriter != null)
+                tabWriter.close();
+            if (fw != null)
+                fw.close();
             if (geneCount==0)
                 throw new Exception("No genes called for this genome");
 
             // make GC file
-            File gcFile = new File(genomeDir+"/genes.GC");
-            ProcessBuilder pb =
-                new ProcessBuilder("/kb/module/feba/bin/RegionGC.pl",
-                                   genomeDir+"/genome.fna",
-                                   genomeDir+"/genes.tab");
-            pb.redirectOutput(Redirect.to(gcFile));
-            pb.start().waitFor();
+            if (genomeDir != null) {
+                File gcFile = new File(genomeDir+"/genes.GC");
+                ProcessBuilder pb =
+                    new ProcessBuilder("/kb/module/feba/bin/RegionGC.pl",
+                                       genomeDir+"/genome.fna",
+                                       genomeDir+"/genes.tab");
+                pb.redirectOutput(Redirect.to(gcFile));
+                pb.start().waitFor();
+            }
         }
         catch (Exception e) {
             System.out.println(e.getMessage());
@@ -294,7 +312,7 @@ public class TnSeq {
     public static Tuple2<String,String> parseModel(String primerModelName) throws Exception {
         List<String> lines = Files.readAllLines(Paths.get("/kb/module/feba/primers/"+primerModelName), Charset.defaultCharset());
         if (lines.size() < 2)
-            throw new Exception("Barcode model file "+primerModelName+" seems corrupted; should have two lines");
+            throw new Exception("Format error for barcode model file "+primerModelName+"; should have exactly two lines");
         return new Tuple2<String,String>()
             .withE1(lines.get(0))
             .withE2(lines.get(1));
@@ -393,15 +411,12 @@ public class TnSeq {
        save mapped reads to workspace, with provenance.
        returns ref
     */
-    public static String saveMappedReads(String wsURL,
-                                         AuthToken token,
+    public static String saveMappedReads(WorkspaceClient wc,
                                          String ws,
                                          String id,
                                          MappedReads mappedReads,
                                          String methodName,
                                          List<UObject> methodParams) throws Exception {
-
-        WorkspaceClient wc = createWsClient(wsURL,token);
 
         // to get service version:
         RBTnSeqServer server = new RBTnSeqServer();
@@ -592,15 +607,12 @@ public class TnSeq {
        save pool to workspace, with provenance.
        returns ref
     */
-    public static String savePool(String wsURL,
-                                  AuthToken token,
+    public static String savePool(WorkspaceClient wc,
                                   String ws,
                                   String id,
                                   Pool pool,
                                   String methodName,
                                   List<UObject> methodParams) throws Exception {
-
-        WorkspaceClient wc = createWsClient(wsURL,token);
 
         // to get service version:
         RBTnSeqServer server = new RBTnSeqServer();
@@ -624,6 +636,38 @@ public class TnSeq {
     }
 
     /**
+       save feature set to workspace, with provenance.
+       returns ref
+    */
+    public static String saveFeatureSet(WorkspaceClient wc,
+                                        String ws,
+                                        String id,
+                                        FeatureSet featureSet,
+                                        String methodName,
+                                        List<UObject> methodParams) throws Exception {
+
+        // to get service version:
+        RBTnSeqServer server = new RBTnSeqServer();
+        
+        ObjectSaveData data = new ObjectSaveData()
+            .withData(new UObject(featureSet))
+            .withType("KBaseCollections.FeatureSet")
+            .withProvenance(Arrays.asList(new ProvenanceAction()
+                                          .withDescription("Essential genes")
+                                          .withService("RBTnSeq")
+                                          .withServiceVer(server.version(null))
+                                          .withMethod(methodName)
+                                          .withMethodParams(methodParams)));
+        try {
+            long objid = Long.parseLong(id);
+            data.withObjid(objid);
+        } catch (NumberFormatException ex) {
+            data.withName(id);
+        }
+        return getRefFromObjectInfo(wc.saveObjects(new SaveObjectsParams().withWorkspace(ws).withObjects(Arrays.asList(data))).get(0));
+    }
+    
+    /**
        store a file in shock; returns handle
     */
     public static Handle storeShock(String shockURL,
@@ -642,31 +686,40 @@ public class TnSeq {
     /**
        runs the whole TnSeq pipeline
     */
-    public static String run(String wsURL,
-                             String shockURL,
-                             AuthToken token,
-                             TnSeqInput inputParams) throws Exception {
+    public static TnSeqOutput run(String wsURL,
+                                  String shockURL,
+                                  AuthToken token,
+                                  TnSeqInput input) throws Exception {
 
         // turn local into absolute paths
-        String genomeRef = inputParams.getInputGenome();
+        String genomeRef = input.getInputGenome();
         if (genomeRef.indexOf("/") == -1)
-            genomeRef = inputParams.getWs()+"/"+genomeRef;
-        String readsRef = inputParams.getInputReadLibrary();
+            genomeRef = input.getWs()+"/"+genomeRef;
+        String readsRef = input.getInputReadLibrary();
         if (readsRef.indexOf("/") == -1)
-            readsRef = inputParams.getWs()+"/"+readsRef;
+            readsRef = input.getWs()+"/"+readsRef;
 
-        String rv = "TnSeq pipeline output:\n";
+        // for provenance
+        List<UObject> methodParams = Arrays.asList(new UObject(input));
+        String methodName = "TnSeq.run";
+        // to get service version:
+        RBTnSeqServer server = new RBTnSeqServer();
+        WorkspaceClient wc = createWsClient(wsURL,token);
+        
+        // dump reads
+        String reportText = "TnSeq pipeline output:\n";
 
-        File readsFile = dumpSEReadsFASTQ(wsURL,
-                                          token,
+        File tempDir = new File("/kb/module/work/");
+
+        File readsFile = dumpSEReadsFASTQ(wc,
                                           tempDir,
                                           readsRef);
 
+        // dump genome
         Tuple3<File,
             Map<String,String>,
             ArrayList<Tuple5<Integer,Long,Long,String,String>>> genomeData =
-            dumpGenomeTab(wsURL,
-                          token,
+            dumpGenomeTab(wc,
                           tempDir,
                           genomeRef);
         
@@ -677,7 +730,7 @@ public class TnSeq {
         File[] mapOutput = mapReads(tempDir,
                                     readsFile,
                                     genomeDir,
-                                    inputParams.getInputBarcodeModel());
+                                    input.getInputBarcodeModel());
 
         Handle mappedReadsHandle = storeShock(shockURL,
                                               token,
@@ -688,7 +741,7 @@ public class TnSeq {
                                                    readsRef,
                                                    mapOutput[0],
                                                    mappedReadsHandle,
-                                                   inputParams.getInputBarcodeModel());
+                                                   input.getInputBarcodeModel());
 
         /*
         ObjectMapper mapper = new ObjectMapper();
@@ -696,26 +749,25 @@ public class TnSeq {
         mapper.writeValue(f,mappedReads);
         */
 
-        String mappedReadsRef = saveMappedReads(wsURL,
-                                                token,
-                                                inputParams.getWs(),
-                                                inputParams.getOutputMappedReads(),
+        String mappedReadsRef = saveMappedReads(wc,
+                                                input.getWs(),
+                                                input.getOutputMappedReads(),
                                                 mappedReads,
-                                                "TnSeq.run",
-                                                Arrays.asList(new UObject(inputParams)));
+                                                methodName,
+                                                methodParams);
 
-        rv += "---\nStep 1: Read mapping output:\n";
+        reportText += "---\nStep 1: Read mapping output:\n";
         List<String> lines = Files.readAllLines(Paths.get(mapOutput[1].getPath()), Charset.defaultCharset());
         for (String line : lines) {
             if (line.startsWith("Parsed model"))
-                line = "Parsed model "+inputParams.getInputBarcodeModel();
-            rv += line+"\n";
+                line = "Parsed model "+input.getInputBarcodeModel();
+            reportText += line+"\n";
         }
 
         File[] poolOutput = designRandomPool(tempDir,
                                              mapOutput[0],
                                              new File(genomeDir+"/genes.tab"),
-                                             inputParams.getInputMinN().longValue());
+                                             input.getInputMinN().longValue());
 
         Handle poolHandle = storeShock(shockURL,
                                        token,
@@ -750,20 +802,185 @@ public class TnSeq {
                               poolUnhitHandle,
                               poolSurpriseHandle);
 
-        String poolRef = savePool(wsURL,
-                                  token,
-                                  inputParams.getWs(),
-                                  inputParams.getOutputPool(),
+        String poolRef = savePool(wc,
+                                  input.getWs(),
+                                  input.getOutputPool(),
                                   pool,
-                                  "TnSeq.run",
-                                  Arrays.asList(new UObject(inputParams)));
+                                  methodName,
+                                  methodParams);
 
-        rv += "\n---\n\nStep 2: TnSeq pool construction output:\n";
+        reportText += "\n---\n\nStep 2: TnSeq pool construction output:\n";
         lines = Files.readAllLines(Paths.get(poolOutput[1].getPath()), Charset.defaultCharset());
         for (String line : lines) {
-            rv += line+"\n";
+            reportText += line+"\n";
         }
+
+        // generate report with list of objects created
+        List<WorkspaceObject> objects = new ArrayList<WorkspaceObject>();
+        objects.add(new WorkspaceObject()
+                    .withRef(mappedReadsRef)
+                    .withDescription("TnSeq mapped reads"));
+        objects.add(new WorkspaceObject()
+                    .withRef(poolRef)
+                    .withDescription("TnSeq library pool"));
+        String reportName = "rbtnseq_report_"+UUID.randomUUID().toString();
+        Report report = new Report()
+            .withTextMessage(reportText)
+            .withObjectsCreated(objects);
+
+        ObjectSaveData reportData = new ObjectSaveData()
+            .withType("KBaseReport.Report")
+            .withData(new UObject(report))
+            .withName(reportName)
+            .withHidden(1L)
+            .withProvenance(Arrays.asList(new ProvenanceAction()
+                                          .withDescription("RBTnSeq TnSeq report")
+                                          .withService("RBTnSeq")
+                                          .withServiceVer(server.version(null))
+                                          .withMethod(methodName)
+                                          .withMethodParams(methodParams)));
+        String reportRef = getRefFromObjectInfo(wc.saveObjects(new SaveObjectsParams().withWorkspace(input.getWs()).withObjects(Arrays.asList(reportData))).get(0));
+
+        TnSeqOutput rv = new TnSeqOutput()
+            .withReportName(reportName)
+            .withReportRef(reportRef);
+
+        return rv;
+    }
+
+    /**
+       Gets list of essential genes from a TnSeq experiment
+    */
+    public static EssentialGenesOutput getEssentialGenes(String wsURL,
+                                                         String shockURL,
+                                                         AuthToken token,
+                                                         EssentialGenesInput input) throws Exception {
+
+        // turn local into absolute paths
+        String poolRef = input.getInputPool();
+        if (poolRef.indexOf("/") == -1)
+            poolRef = input.getWs()+"/"+poolRef;
+
+        // output feature set
+        Map<String,List<String>> featureMap = new HashMap<String,List<String>>();
+        FeatureSet featureSet = new FeatureSet()
+            .withDescription("Essential genes")
+            .withElements(featureMap);
+
+        // for provenance
+        List<UObject> methodParams = Arrays.asList(new UObject(input));
+        String methodName = "TnSeq.getEssentialGenes";
+        // to get service version:
+        RBTnSeqServer server = new RBTnSeqServer();
+        WorkspaceClient wc = createWsClient(wsURL,token);
+
+        String reportText = "Getting essential genes from TnSeq experiment.\n";
+
+        // load in Pool object
+        Pool pool = wc.getObjects(Arrays.asList(new ObjectIdentity().withRef(poolRef))).get(0).getData().asClassInstance(Pool.class);
+        if (pool==null)
+            throw new Exception("Null return error reading Pool");
+        String genomeRef = pool.getGenome();
+
+        // each feature in the FeatureSet should map to list of genomes(?)
+        List<String> genomeList = new ArrayList<String>();
+        genomeList.add(genomeRef);
+
+        // get list of features in genome; don't actually dump it
+        Tuple3<File,
+            Map<String,String>,
+            ArrayList<Tuple5<Integer,Long,Long,String,String>>> genomeData =
+            dumpGenomeTab(wc,
+                          null,
+                          genomeRef);
+        ArrayList<Tuple5<Integer,Long,Long,String,String>> featureList = genomeData.getE3();
+
+        // dump un-hit (essential) gene list from Shock
+        Handle h = pool.getPoolUnhitFile();
+        if (h==null)
+            reportText += "No essential genes were found in this experiment.";
+        else {
+            int nEssentialGenes = 0;
+            File tempDir = new File("/kb/module/work/");
+            File unhitFile = File.createTempFile("pool", ".tab", tempDir);
+            unhitFile.delete();
+            
+            String url = h.getUrl()+"/node/"+h.getId()+"?download";
+
+            // needs authenticated shock download
+            ProcessBuilder pb =
+                new ProcessBuilder("/bin/bash",
+                                   "-c",
+                                   "/usr/bin/curl -k -X GET "+url+" -H \"Authorization: OAuth "+token.toString()+"\"");
+            pb.redirectOutput(Redirect.to(unhitFile));
+            pb.start().waitFor();
+
+            // load in file; feature index is first column
+            BufferedReader infile = IO.openReader(unhitFile.getPath());
+            if (infile==null)
+                throw new Exception("failed to open unhit pool file "+unhitFile.getPath());
+
+            while (infile.ready()) {
+                String buffer = infile.readLine();
+                if (buffer==null) {
+                    infile.close();
+                    break;
+                }
+
+                int pos = buffer.indexOf("\t");
+                if (pos > 0) {
+                    int featureIndex = StringUtil.atoi(buffer,0,pos)-1;
+                    if (featureIndex > -1) {
+                        Tuple5<Integer,Long,Long,String,String> featureInfo = featureList.get(featureIndex);
+                        // feature ID is 4th element
+                        if (featureInfo != null) {
+                            nEssentialGenes++;
+                            featureMap.put(featureInfo.getE4(),genomeList);
+                        }
+                    }
+                }
+            }
+            reportText += nEssentialGenes+" were found in this TnSeq experiment";
+        }
+
+        // save the feature set
+        String featureSetRef = saveFeatureSet(wc,
+                                              input.getWs(),
+                                              input.getOutputFeatureSet(),
+                                              featureSet,
+                                              methodName,
+                                              methodParams);
+
+        // generate report with list of objects created
+        List<WorkspaceObject> objects = new ArrayList<WorkspaceObject>();
+        objects.add(new WorkspaceObject()
+                    .withRef(featureSetRef)
+                    .withDescription("Essential genes"));
+        String reportName = "rbtnseq_report_"+UUID.randomUUID().toString();
+        Report report = new Report()
+            .withTextMessage(reportText)
+            .withObjectsCreated(objects);
+
+        ObjectSaveData reportData = new ObjectSaveData()
+            .withType("KBaseReport.Report")
+            .withData(new UObject(report))
+            .withName(reportName)
+            .withHidden(1L)
+            .withProvenance(Arrays.asList(new ProvenanceAction()
+                                          .withDescription("RBTnSeq essential genes report")
+                                          .withService("RBTnSeq")
+                                          .withServiceVer(server.version(null))
+                                          .withMethod(methodName)
+                                          .withMethodParams(methodParams)));
+        String reportRef = getRefFromObjectInfo(wc.saveObjects(new SaveObjectsParams().withWorkspace(input.getWs()).withObjects(Arrays.asList(reportData))).get(0));
+
+        EssentialGenesOutput rv = new EssentialGenesOutput()
+            .withOutputFeatureSet(featureSetRef)
+            .withReportName(reportName)
+            .withReportRef(reportRef);
 
         return rv;
     }
 }
+
+
