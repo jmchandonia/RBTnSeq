@@ -514,6 +514,8 @@ public class TnSeq {
                 infile.close();
                 break;
             }
+            if (buffer.startsWith("barcode"))
+                continue;
 
             // System.err.println("line "+i);
 
@@ -779,7 +781,6 @@ public class TnSeq {
                                                    mapOutput[0],
                                                    mappedReadsHandle,
                                                    input.getInputBarcodeModel());
-        mapOutput[0].delete();
 
         /*
         ObjectMapper mapper = new ObjectMapper();
@@ -808,6 +809,7 @@ public class TnSeq {
                                              mapOutput[0],
                                              new File(genomeDir+"/genes.tab"),
                                              input.getInputMinN().longValue());
+        mapOutput[0].delete();
 
         Handle poolHandle = toShock(shockURL, token, poolOutput[0]);
 
@@ -889,15 +891,12 @@ public class TnSeq {
             .withElements(featureMap);
 
         // for provenance
-        List<UObject> methodParams = Arrays.asList(new UObject(input));
         String methodName = "TnSeq.getEssentialGenes";
-        // to get service version:
-        RBTnSeqServer server = new RBTnSeqServer();
-        WorkspaceClient wc = createWsClient(wsURL,token);
-
-        String reportText = "Getting essential genes from TnSeq experiment.\n";
+        List<UObject> methodParams = Arrays.asList(new UObject(input));
 
         // load in Pool object
+        String reportText = "Getting essential genes from TnSeq experiment.\n";
+        WorkspaceClient wc = createWsClient(wsURL,token);
         Pool pool = wc.getObjects(Arrays.asList(new ObjectIdentity().withRef(poolRef))).get(0).getData().asClassInstance(Pool.class);
         if (pool==null)
             throw new Exception("Null return error reading Pool");
