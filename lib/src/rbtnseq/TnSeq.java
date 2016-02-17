@@ -841,7 +841,7 @@ public class TnSeq {
         lines = Files.readAllLines(Paths.get(poolOutput[1].getPath()), Charset.defaultCharset());
         for (String line : lines) {
             if (line.indexOf("with no good insertions") > -1)
-                line = line.replace(poolOutput[0].getAbsolutePath()+".unhit", "Pool object (run GetEssentialGenes to view)");
+                line = line.replace(poolOutput[0].getAbsolutePath()+".unhit", "Pool object (use 'Get Essential Genes' method to view)");
             else if (line.indexOf("with surprising insertions") > -1)
                 line = line.replace(poolOutput[0].getAbsolutePath()+".surprise", "Pool object");
             else if (line.indexOf("read and strain counts for hit genes") > -1)
