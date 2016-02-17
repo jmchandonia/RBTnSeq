@@ -81,8 +81,8 @@ public class RBTnSeqServerTest {
 
     /**
        test tnseq with some D. vulgaris reads data
-    */
     @Test
+    */
     public void testTnSeq() throws Exception {
         TnSeqInput input = new TnSeqInput()
             .withWs("jmc:1449699355207")
@@ -115,6 +115,7 @@ public class RBTnSeqServerTest {
 
     /**
        test essential genes
+    */
     @Test
     public void testEssentialGenes() throws Exception {
         EssentialGenesInput input = new EssentialGenesInput()
@@ -125,7 +126,6 @@ public class RBTnSeqServerTest {
         Assert.assertNotNull(rv);
         System.out.println("essential genes report "+rv.getReportRef());
     }
-    */
     
     /*    
     @Test

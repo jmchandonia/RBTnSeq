@@ -348,10 +348,8 @@ public class TnSeq {
         int i=0;
         while (infile.ready()) {
             String buffer = infile.readLine();
-            if (buffer==null) {
-                infile.close();
+            if (buffer==null)
                 break;
-            }
 
             // System.err.println("line "+i++);
 
@@ -510,10 +508,8 @@ public class TnSeq {
             i++;
             
             String buffer = infile.readLine();
-            if (buffer==null) {
-                infile.close();
+            if (buffer==null)
                 break;
-            }
             if (buffer.startsWith("barcode"))
                 continue;
 
@@ -936,10 +932,8 @@ public class TnSeq {
 
             while (infile.ready()) {
                 String buffer = infile.readLine();
-                if (buffer==null) {
-                    infile.close();
+                if (buffer==null)
                     break;
-                }
 
                 int pos = buffer.indexOf("\t");
                 if (pos > 0) {
@@ -954,7 +948,10 @@ public class TnSeq {
                     }
                 }
             }
-            reportText += nEssentialGenes+" were found in this TnSeq experiment";
+            infile.close();
+            unhitFile.delete();
+            
+            reportText += nEssentialGenes+" essential genes were found in this TnSeq experiment";
         }
 
         // save the feature set
