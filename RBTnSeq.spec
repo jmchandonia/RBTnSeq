@@ -26,6 +26,17 @@ module RBTnSeq {
 	/* runs TnSeq part of pipeline */
 	funcdef runTnSeq(TnSeqInput input) returns (TnSeqOutput output) authentication required;
 
+	/* Inputs to makeTnSeqPool */
+	typedef structure {
+	    string ws;
+            string input_mapped_reads;
+            int input_minN;
+            string output_pool;
+	} TnSeqPoolInput;
+
+	/* runs TnSeq part of pipeline */
+	funcdef makeTnSeqPool(TnSeqPoolInput input) returns (TnSeqOutput output) authentication required;
+
         /* Inputs to getEssentialGenes */
         typedef structure {
 	    string ws;

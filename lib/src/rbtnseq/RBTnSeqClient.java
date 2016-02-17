@@ -159,6 +159,24 @@ public class RBTnSeqClient {
     }
 
     /**
+     * <p>Original spec-file function name: makeTnSeqPool</p>
+     * <pre>
+     * runs TnSeq part of pipeline
+     * </pre>
+     * @param   input   instance of type {@link rbtnseq.TnSeqPoolInput TnSeqPoolInput}
+     * @return   parameter "output" of type {@link rbtnseq.TnSeqOutput TnSeqOutput}
+     * @throws IOException if an IO exception occurs
+     * @throws JsonClientException if a JSON RPC exception occurs
+     */
+    public TnSeqOutput makeTnSeqPool(TnSeqPoolInput input, RpcContext... jsonRpcContext) throws IOException, JsonClientException {
+        List<Object> args = new ArrayList<Object>();
+        args.add(input);
+        TypeReference<List<TnSeqOutput>> retType = new TypeReference<List<TnSeqOutput>>() {};
+        List<TnSeqOutput> res = caller.jsonrpcCall("RBTnSeq.makeTnSeqPool", args, retType, true, true, jsonRpcContext);
+        return res.get(0);
+    }
+
+    /**
      * <p>Original spec-file function name: getEssentialGenes</p>
      * <pre>
      * gets list of essential (un-hit) genes from a Pool

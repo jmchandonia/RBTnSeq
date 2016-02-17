@@ -58,6 +58,23 @@ public class RBTnSeqServer extends JsonServerServlet {
     }
 
     /**
+     * <p>Original spec-file function name: makeTnSeqPool</p>
+     * <pre>
+     * runs TnSeq part of pipeline
+     * </pre>
+     * @param   input   instance of type {@link rbtnseq.TnSeqPoolInput TnSeqPoolInput}
+     * @return   parameter "output" of type {@link rbtnseq.TnSeqOutput TnSeqOutput}
+     */
+    @JsonServerMethod(rpc = "RBTnSeq.makeTnSeqPool", async=true)
+    public TnSeqOutput makeTnSeqPool(TnSeqPoolInput input, AuthToken authPart, RpcContext jsonRpcContext) throws Exception {
+        TnSeqOutput returnVal = null;
+        //BEGIN makeTnSeqPool
+        returnVal = TnSeq.makePool(wsUrl,shockUrl,authPart,input);
+        //END makeTnSeqPool
+        return returnVal;
+    }
+
+    /**
      * <p>Original spec-file function name: getEssentialGenes</p>
      * <pre>
      * gets list of essential (un-hit) genes from a Pool

@@ -399,6 +399,42 @@ public class TnSeq {
     }
 
     /**
+       dumps a mapped reads object out to a tab file; returns a
+       tuple with the file and the genome reference
+    */
+    public static Tuple2<File,String> dumpMappedReads(WorkspaceClient wc,
+                                                      File tempDir,
+                                                      String mappedReadsRef) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+
+        File mappedReadsFile = File.createTempFile("reads", ".fastq.gz", tempDir);
+        mappedReadsFile.delete();
+        String genomeRef = null;
+
+        try {
+            us.kbase.kbaserbtnseq.MappedReads mr = wc.getObjects(Arrays.asList(new ObjectIdentity().withRef(mappedReadsRef))).get(0).getData().asClassInstance(us.kbase.kbaserbtnseq.MappedReads.class);
+            // System.out.println("read single-end library as assembly object");
+            Handle h = mr.getMappedReadsFile();
+            genomeRef = mr.getGenome();
+            AuthToken token = wc.getToken();
+
+            mappedReadsFile = fromShock(h, token, mappedReadsFile, false);
+        }
+        catch (Exception e) {
+            System.out.println(e.getMessage());
+            System.out.println("Error reading mapped reads object");
+            e.printStackTrace();
+            mappedReadsFile = null;
+        }
+
+        Tuple2<File,String> rv = new Tuple2<File,String>()
+            .withE1(mappedReadsFile)
+            .withE2(genomeRef);
+        
+        return rv;
+    }
+
+    /**
        save mapped reads to workspace, with provenance.
        returns ref
     */
@@ -720,6 +756,114 @@ public class TnSeq {
             .withProvenance(provenance);
         String reportRef = getRefFromObjectInfo(wc.saveObjects(new SaveObjectsParams().withWorkspace(ws).withObjects(Arrays.asList(reportData))).get(0));
         return new String[] { reportName, reportRef };
+    }
+
+    /**
+       runs the 2nd part of the TnSeq pipeline
+    */
+    public static TnSeqOutput makePool(String wsURL,
+                                       String shockURL,
+                                       AuthToken token,
+                                       TnSeqPoolInput input) throws Exception {
+
+        // turn local into absolute paths
+        String mappedReadsRef = input.getInputMappedReads();
+        if (mappedReadsRef.indexOf("/") == -1)
+            mappedReadsRef = input.getWs()+"/"+mappedReadsRef;
+
+        // for provenance
+        String methodName = "TnSeq.makePool";
+        List<UObject> methodParams = Arrays.asList(new UObject(input));
+
+        // dump mapped reads to file
+        WorkspaceClient wc = createWsClient(wsURL,token);
+        File tempDir = new File("/kb/module/work/");
+        Tuple2<File,String> mr = dumpMappedReads(wc,
+                                                 tempDir,
+                                                 mappedReadsRef);
+        File mappedReadsFile = mr.getE1();
+        String genomeRef = mr.getE2();
+
+        // dump genome to file
+        Tuple3<File,
+            Map<String,String>,
+            ArrayList<Tuple5<Integer,Long,Long,String,String>>> genomeData =
+            dumpGenomeTab(wc,
+                          tempDir,
+                          genomeRef);
+        
+        File genomeDir = genomeData.getE1();
+        ArrayList<Tuple5<Integer,Long,Long,String,String>> featureList = genomeData.getE3();
+
+        // make random pool
+        File[] poolOutput = designRandomPool(tempDir,
+                                             mappedReadsFile,
+                                             new File(genomeDir+"/genes.tab"),
+                                             input.getInputMinN().longValue());
+        mappedReadsFile.delete();
+
+        Handle poolHandle = toShock(shockURL, token, poolOutput[0]);
+
+        File f = new File(poolOutput[0]+".hit");
+        Handle poolHitHandle = toShock(shockURL, token, f);
+        f.delete();
+        f = new File(poolOutput[0]+".unhit");
+        Handle poolUnhitHandle = toShock(shockURL, token, f);
+        f.delete();
+        f = new File(poolOutput[0]+".surprise");
+        Handle poolSurpriseHandle = toShock(shockURL, token, f);
+        f.delete();
+        
+        Pool pool = parsePool(featureList,
+                              genomeRef,
+                              mappedReadsRef,
+                              poolOutput[0],
+                              poolHandle,
+                              poolHitHandle,
+                              poolUnhitHandle,
+                              poolSurpriseHandle);
+        poolOutput[0].delete();
+
+        String poolRef = savePool(wc,
+                                  input.getWs(),
+                                  input.getOutputPool(),
+                                  pool,
+                                  makeProvenance("TnSeq pool",
+                                                 methodName,
+                                                 methodParams));
+
+        String reportText = "TnSeq pool construction output:\n";
+        List<String> lines = Files.readAllLines(Paths.get(poolOutput[1].getPath()), Charset.defaultCharset());
+        for (String line : lines) {
+            if (line.indexOf("with no good insertions") > -1)
+                line = line.replace(poolOutput[0].getAbsolutePath()+".unhit", "Pool object (use 'Get Essential Genes' method to view)");
+            else if (line.indexOf("with surprising insertions") > -1)
+                line = line.replace(poolOutput[0].getAbsolutePath()+".surprise", "Pool object");
+            else if (line.indexOf("read and strain counts for hit genes") > -1)
+                line = line.replace(poolOutput[0].getAbsolutePath()+".hit", "Pool object");
+            
+            reportText += line+"\n";
+        }
+        poolOutput[1].delete();
+
+        // generate report with list of objects created
+        List<WorkspaceObject> objects = new ArrayList<WorkspaceObject>();
+        objects.add(new WorkspaceObject()
+                    .withRef(poolRef)
+                    .withDescription("TnSeq library pool"));
+        String[] report = makeReport(wc,
+                                     input.getWs(),
+                                     reportText,
+                                     objects,
+                                     makeProvenance("RBTnSeq Make TnSeq Pool report",
+                                                    methodName,
+                                                    methodParams));
+
+        TnSeqOutput rv = new TnSeqOutput()
+            .withReportName(report[0])
+            .withReportRef(report[1]);
+
+        return rv;
     }
 
     /**

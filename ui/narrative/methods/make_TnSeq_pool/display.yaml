@@ -1,0 +1,50 @@
+#
+# define display information
+#
+name: Make TnSeq Pool
+tooltip: |
+  After barcode reads are mapped to a genome, this method creates a mutant library (pool) to use in BarSeq experiments
+screenshots: []
+
+icon: icon.png
+
+#
+# define a set of similar methods that might be useful to the user
+#
+suggestions:
+  apps:
+    related:
+      []
+    next:
+      []
+  methods:
+    related:
+      [run_TnSeq]
+    next:
+      [get_essential_genes]
+
+parameters:
+  input_mapped_reads :
+    ui-name : |
+      Input mapped reads
+    short-hint : |
+      MappedReads object created by the "Run TnSeq" method
+    long-hint  : |
+      This method needs a MappedReads object indicating where all the barcode insertions map to in your genome.
+  input_minN :
+    ui-name : |
+      Minimum number of reads
+    short-hint : |
+      Minimum number of reads for a mutant to be picked for the pool
+    long-hint  : |
+      This is the minimum number of barcode reads required for a mutant to be picked for the TnSeq pool.  The default is 5, but larger numbers are OK.
+  output_pool :
+    ui-name : |
+      Output Pool
+    short-hint : |
+      Pool object created by this method
+    long-hint  : |
+      This method will create a Pool (i.e, TnSeq library) object that includes the starting counts for all barcoded mutant strains in the TnSeq experiment.
+
+description : |
+  <p>This method runs the second step in Morgan Price's FEBA pipeline for TnSeq processing, taking mapping barcode reads that were mapped to a genome, and creating a mutant library (pool) to use in BarSeq experiments</p>
