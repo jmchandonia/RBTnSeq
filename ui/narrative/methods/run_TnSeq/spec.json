@@ -102,7 +102,8 @@
 	    "default_values": [ "5" ],
 	    "field_type": "text",
             "text_options": {
-                "validate_as": "int"
+                "validate_as": "int",
+		"min_int" : 1
             }
 	},
 	{
@@ -111,7 +112,10 @@
 	    "advanced": false,
 	    "allow_multiple": false,
 	    "default_values": [ "" ],
-	    "field_type": "text"
+	    "field_type": "text",
+	    "text_options": {
+                "valid_ws_types": [ "KBaseRBTnSeq.MappedReads" ]
+            }
 	},
 	{
 	    "id": "output_pool",
@@ -119,7 +123,10 @@
 	    "advanced": false,
 	    "allow_multiple": false,
 	    "default_values": [ "" ],
-	    "field_type": "text"
+	    "field_type": "text",
+	    "text_options": {
+                "valid_ws_types": [ "KBaseRBTnSeq.Pool" ]
+            }
 	}
     ],    
     "behavior": {
@@ -158,10 +165,22 @@
 		}
 	    ],
 	    "output_mapping": [
-		{
-		    "service_method_output_path": [0],
-		    "target_property": "output"
-		}
+                {
+                    "narrative_system_variable": "workspace",
+                    "target_property": "ws"
+                },
+                {
+                    "service_method_output_path": [0, "report_name"],
+                    "target_property": "report_name"
+                },
+                {
+                    "service_method_output_path": [0, "report_ref"],
+                    "target_property": "report_ref"
+                },
+                {
+                    "narrative_system_variable": "workspace",
+                    "target_property": "workspace_name"
+                }
 	    ]
 	}
     },
