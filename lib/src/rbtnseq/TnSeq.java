@@ -897,6 +897,7 @@ public class TnSeq {
         String mappedReadsRef = null;
         String poolRef = null;
         List<String> warnings = null;
+        List<WorkspaceObject> objects = null;        
 
         try {
             // dump reads
@@ -931,7 +932,11 @@ public class TnSeq {
                                                        mapOutput[0],
                                                        mappedReadsHandle,
                                                        input.getInputBarcodeModel());
-
+            objects = new ArrayList<WorkspaceObject>();
+            objects.add(new WorkspaceObject()
+                        .withRef(mappedReadsRef)
+                        .withDescription("TnSeq mapped reads"));
+           
             /*
               ObjectMapper mapper = new ObjectMapper();
               File f = new File(tempDir+"/mappedReadsObject.json");
@@ -955,6 +960,7 @@ public class TnSeq {
             }
             mapOutput[1].delete();
 
+            // step 2: make random pool
             File[] poolOutput = designRandomPool(tempDir,
                                                  mapOutput[0],
                                                  new File(genomeDir+"/genes.tab"),
@@ -983,6 +989,7 @@ public class TnSeq {
                                   poolSurpriseHandle);
             poolOutput[0].delete();
 
+            // save it to workspace
             poolRef = savePool(wc,
                                input.getWs(),
                                input.getOutputPool(),
@@ -990,6 +997,10 @@ public class TnSeq {
                                makeProvenance("TnSeq pool",
                                               methodName,
                                               methodParams));
+            objects.add(new WorkspaceObject()
+                        .withRef(poolRef)
+                        .withDescription("TnSeq library pool"));
+            
 
             reportText += "\n---\n\nStep 2: TnSeq pool construction output:\n";
             lines = Files.readAllLines(Paths.get(poolOutput[1].getPath()), Charset.defaultCharset());
@@ -1012,15 +1023,6 @@ public class TnSeq {
         }
 
         // generate report with list of objects created
-        List<WorkspaceObject> objects = new ArrayList<WorkspaceObject>();
-        if (mappedReadsRef != null)
-            objects.add(new WorkspaceObject()
-                        .withRef(mappedReadsRef)
-                        .withDescription("TnSeq mapped reads"));
-        if (poolRef != null);
-        objects.add(new WorkspaceObject()
-                    .withRef(poolRef)
-                    .withDescription("TnSeq library pool"));
         String[] report = makeReport(wc,
                                      input.getWs(),
                                      reportText,
