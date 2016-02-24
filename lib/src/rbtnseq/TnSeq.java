@@ -741,11 +741,13 @@ public class TnSeq {
     public static String[] makeReport(WorkspaceClient wc,
                                       String ws,
                                       String reportText,
+                                      List<String> warnings,
                                       List<WorkspaceObject> objects,
                                       List<ProvenanceAction> provenance) throws Exception {
         String reportName = "rbtnseq_report_"+UUID.randomUUID().toString();
         Report report = new Report()
             .withTextMessage(reportText)
+            .withWarnings(warnings)
             .withObjectsCreated(objects);
 
         ObjectSaveData reportData = new ObjectSaveData()
@@ -854,6 +856,7 @@ public class TnSeq {
         String[] report = makeReport(wc,
                                      input.getWs(),
                                      reportText,
+                                     null,
                                      objects,
                                      makeProvenance("RBTnSeq Make TnSeq Pool report",
                                                     methodName,
@@ -874,6 +877,9 @@ public class TnSeq {
                                   AuthToken token,
                                   TnSeqInput input) throws Exception {
 
+        WorkspaceClient wc = createWsClient(wsURL,token);
+        File tempDir = new File("/kb/module/work/");
+        
         // turn local into absolute paths
         String genomeRef = input.getInputGenome();
         if (genomeRef.indexOf("/") == -1)
@@ -886,126 +892,139 @@ public class TnSeq {
         String methodName = "TnSeq.run";
         List<UObject> methodParams = Arrays.asList(new UObject(input));
         
-        // dump reads
+        // expected outputs:
         String reportText = "TnSeq pipeline output:\n";
-        WorkspaceClient wc = createWsClient(wsURL,token);
-        File tempDir = new File("/kb/module/work/");
-        File readsFile = dumpSEReadsFASTQ(wc,
-                                          tempDir,
-                                          readsRef);
+        String mappedReadsRef = null;
+        String poolRef = null;
+        List<String> warnings = null;
 
-        // dump genome
-        Tuple3<File,
-            Map<String,String>,
-            ArrayList<Tuple5<Integer,Long,Long,String,String>>> genomeData =
-            dumpGenomeTab(wc,
-                          tempDir,
-                          genomeRef);
+        try {
+            // dump reads
+            File readsFile = dumpSEReadsFASTQ(wc,
+                                              tempDir,
+                                              readsRef);
+
+            // dump genome
+            Tuple3<File,
+                Map<String,String>,
+                ArrayList<Tuple5<Integer,Long,Long,String,String>>> genomeData =
+                dumpGenomeTab(wc,
+                              tempDir,
+                              genomeRef);
         
-        File genomeDir = genomeData.getE1();
-        Map<String,String> contigMap = genomeData.getE2();
-        ArrayList<Tuple5<Integer,Long,Long,String,String>> featureList = genomeData.getE3();
+            File genomeDir = genomeData.getE1();
+            Map<String,String> contigMap = genomeData.getE2();
+            ArrayList<Tuple5<Integer,Long,Long,String,String>> featureList = genomeData.getE3();
 
-        File[] mapOutput = mapReads(tempDir,
-                                    readsFile,
-                                    genomeDir,
-                                    input.getInputBarcodeModel());
+            File[] mapOutput = mapReads(tempDir,
+                                        readsFile,
+                                        genomeDir,
+                                        input.getInputBarcodeModel());
 
-        readsFile.delete();
+            readsFile.delete();
 
-        Handle mappedReadsHandle = toShock(shockURL, token, mapOutput[0]);
+            Handle mappedReadsHandle = toShock(shockURL, token, mapOutput[0]);
 
-        MappedReads mappedReads = parseMappedReads(contigMap.size(),
-                                                   genomeRef,
-                                                   readsRef,
-                                                   mapOutput[0],
-                                                   mappedReadsHandle,
-                                                   input.getInputBarcodeModel());
+            MappedReads mappedReads = parseMappedReads(contigMap.size(),
+                                                       genomeRef,
+                                                       readsRef,
+                                                       mapOutput[0],
+                                                       mappedReadsHandle,
+                                                       input.getInputBarcodeModel());
 
-        /*
-        ObjectMapper mapper = new ObjectMapper();
-        File f = new File(tempDir+"/mappedReadsObject.json");
-        mapper.writeValue(f,mappedReads);
-        */
+            /*
+              ObjectMapper mapper = new ObjectMapper();
+              File f = new File(tempDir+"/mappedReadsObject.json");
+              mapper.writeValue(f,mappedReads);
+            */
 
-        String mappedReadsRef = saveMappedReads(wc,
-                                                input.getWs(),
-                                                input.getOutputMappedReads(),
-                                                mappedReads,
-                                                makeProvenance("TnSeq mapped reads",
-                                                               methodName,
-                                                               methodParams));
+            mappedReadsRef = saveMappedReads(wc,
+                                             input.getWs(),
+                                             input.getOutputMappedReads(),
+                                             mappedReads,
+                                             makeProvenance("TnSeq mapped reads",
+                                                            methodName,
+                                                            methodParams));
 
-        reportText += "---\nStep 1: Read mapping output:\n";
-        List<String> lines = Files.readAllLines(Paths.get(mapOutput[1].getPath()), Charset.defaultCharset());
-        for (String line : lines) {
-            if (line.startsWith("Parsed model"))
-                line = "Parsed model "+input.getInputBarcodeModel();
-            reportText += line+"\n";
-        }
-        mapOutput[1].delete();
+            reportText += "---\nStep 1: Read mapping output:\n";
+            List<String> lines = Files.readAllLines(Paths.get(mapOutput[1].getPath()), Charset.defaultCharset());
+            for (String line : lines) {
+                if (line.startsWith("Parsed model"))
+                    line = "Parsed model "+input.getInputBarcodeModel();
+                reportText += line+"\n";
+            }
+            mapOutput[1].delete();
 
-        File[] poolOutput = designRandomPool(tempDir,
-                                             mapOutput[0],
-                                             new File(genomeDir+"/genes.tab"),
-                                             input.getInputMinN().longValue());
-        mapOutput[0].delete();
+            File[] poolOutput = designRandomPool(tempDir,
+                                                 mapOutput[0],
+                                                 new File(genomeDir+"/genes.tab"),
+                                                 input.getInputMinN().longValue());
+            mapOutput[0].delete();
 
-        Handle poolHandle = toShock(shockURL, token, poolOutput[0]);
+            Handle poolHandle = toShock(shockURL, token, poolOutput[0]);
 
-        File f = new File(poolOutput[0]+".hit");
-        Handle poolHitHandle = toShock(shockURL, token, f);
-        f.delete();
-        f = new File(poolOutput[0]+".unhit");
-        Handle poolUnhitHandle = toShock(shockURL, token, f);
-        f.delete();
-        f = new File(poolOutput[0]+".surprise");
-        Handle poolSurpriseHandle = toShock(shockURL, token, f);
-        f.delete();
+            File f = new File(poolOutput[0]+".hit");
+            Handle poolHitHandle = toShock(shockURL, token, f);
+            f.delete();
+            f = new File(poolOutput[0]+".unhit");
+            Handle poolUnhitHandle = toShock(shockURL, token, f);
+            f.delete();
+            f = new File(poolOutput[0]+".surprise");
+            Handle poolSurpriseHandle = toShock(shockURL, token, f);
+            f.delete();
         
-        Pool pool = parsePool(featureList,
-                              genomeRef,
-                              mappedReadsRef,
-                              poolOutput[0],
-                              poolHandle,
-                              poolHitHandle,
-                              poolUnhitHandle,
-                              poolSurpriseHandle);
-        poolOutput[0].delete();
+            Pool pool = parsePool(featureList,
+                                  genomeRef,
+                                  mappedReadsRef,
+                                  poolOutput[0],
+                                  poolHandle,
+                                  poolHitHandle,
+                                  poolUnhitHandle,
+                                  poolSurpriseHandle);
+            poolOutput[0].delete();
 
-        String poolRef = savePool(wc,
-                                  input.getWs(),
-                                  input.getOutputPool(),
-                                  pool,
-                                  makeProvenance("TnSeq pool",
-                                                 methodName,
-                                                 methodParams));
+            poolRef = savePool(wc,
+                               input.getWs(),
+                               input.getOutputPool(),
+                               pool,
+                               makeProvenance("TnSeq pool",
+                                              methodName,
+                                              methodParams));
 
-        reportText += "\n---\n\nStep 2: TnSeq pool construction output:\n";
-        lines = Files.readAllLines(Paths.get(poolOutput[1].getPath()), Charset.defaultCharset());
-        for (String line : lines) {
-            if (line.indexOf("with no good insertions") > -1)
-                line = line.replace(poolOutput[0].getAbsolutePath()+".unhit", "Pool object (use 'Get Essential Genes' method to view)");
-            else if (line.indexOf("with surprising insertions") > -1)
-                line = line.replace(poolOutput[0].getAbsolutePath()+".surprise", "Pool object");
-            else if (line.indexOf("read and strain counts for hit genes") > -1)
-                line = line.replace(poolOutput[0].getAbsolutePath()+".hit", "Pool object");
+            reportText += "\n---\n\nStep 2: TnSeq pool construction output:\n";
+            lines = Files.readAllLines(Paths.get(poolOutput[1].getPath()), Charset.defaultCharset());
+            for (String line : lines) {
+                if (line.indexOf("with no good insertions") > -1)
+                    line = line.replace(poolOutput[0].getAbsolutePath()+".unhit", "Pool object (use 'Get Essential Genes' method to view)");
+                else if (line.indexOf("with surprising insertions") > -1)
+                    line = line.replace(poolOutput[0].getAbsolutePath()+".surprise", "Pool object");
+                else if (line.indexOf("read and strain counts for hit genes") > -1)
+                    line = line.replace(poolOutput[0].getAbsolutePath()+".hit", "Pool object");
             
-            reportText += line+"\n";
+                reportText += line+"\n";
+            }
+            poolOutput[1].delete();
         }
-        poolOutput[1].delete();
+        catch (Exception e) {
+            reportText += "\n\nERROR: "+e.getMessage();
+            warnings = new ArrayList<String>();
+            warnings.add("ERROR: "+e.getMessage());
+        }
 
         // generate report with list of objects created
         List<WorkspaceObject> objects = new ArrayList<WorkspaceObject>();
-        objects.add(new WorkspaceObject()
-                    .withRef(mappedReadsRef)
-                    .withDescription("TnSeq mapped reads"));
+        if (mappedReadsRef != null)
+            objects.add(new WorkspaceObject()
+                        .withRef(mappedReadsRef)
+                        .withDescription("TnSeq mapped reads"));
+        if (poolRef != null);
         objects.add(new WorkspaceObject()
                     .withRef(poolRef)
                     .withDescription("TnSeq library pool"));
         String[] report = makeReport(wc,
                                      input.getWs(),
                                      reportText,
+                                     warnings,
                                      objects,
                                      makeProvenance("RBTnSeq TnSeq report",
                                                     methodName,
@@ -1122,6 +1141,7 @@ public class TnSeq {
         String[] report = makeReport(wc,
                                      input.getWs(),
                                      reportText,
+                                     null,
                                      objects,
                                      makeProvenance("RBTnSeq essential genes report",
                                                     methodName,
