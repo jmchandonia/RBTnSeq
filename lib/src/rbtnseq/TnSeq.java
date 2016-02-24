@@ -925,6 +925,11 @@ public class TnSeq {
                                         readsFile,
                                         genomeDir,
                                         input.getInputBarcodeModel());
+            if (mapOutput[0].length()==0) {
+                mapOutput[0].delete();
+                mapOutput[1].delete();
+                throw new Exception("Error mapping reads; are you sure you picked the correct barcode model?");
+            }
 
             readsFile.delete();
 

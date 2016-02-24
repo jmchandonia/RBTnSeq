@@ -97,6 +97,24 @@ public class RBTnSeqServerTest {
         System.out.println("tnseq report "+rv.getReportRef());
     }
 
+    /**
+       test tnseq with some reads that aren't really barcode reads
+    @Test
+    */
+    public void testBadTnSeq() throws Exception {
+        TnSeqInput input = new TnSeqInput()
+            .withWs("jmc:1449699355207")
+            .withInputReadLibrary("rhodo.art.q50.SE.reads")
+            .withInputGenome("Rhodobacter_CACIA_14H1")
+            .withInputBarcodeModel("model_pKMW7")
+            .withInputMinN(10L)
+            .withOutputMappedReads("test_rhodo_reads")
+            .withOutputPool("test_rhodo_pool");
+        TnSeqOutput rv = impl.runTnSeq(input, token, (RpcContext)null);
+        Assert.assertNotNull(rv);
+        System.out.println("tnseq report "+rv.getReportRef());
+    }
+
     
 
     /**
@@ -115,8 +133,8 @@ public class RBTnSeqServerTest {
 
     /**
        test essential genes
-    */
     @Test
+    */
     public void testEssentialGenes() throws Exception {
         EssentialGenesInput input = new EssentialGenesInput()
             .withWs("jmc:1449699355207")
