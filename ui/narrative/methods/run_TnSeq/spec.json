@@ -114,7 +114,8 @@
 	    "default_values": [ "" ],
 	    "field_type": "text",
 	    "text_options": {
-                "valid_ws_types": [ "KBaseRBTnSeq.MappedReads" ]
+                "valid_ws_types": [ "KBaseRBTnSeq.MappedReads" ],
+                "is_output_name": true
             }
 	},
 	{
@@ -125,7 +126,8 @@
 	    "default_values": [ "" ],
 	    "field_type": "text",
 	    "text_options": {
-                "valid_ws_types": [ "KBaseRBTnSeq.Pool" ]
+                "valid_ws_types": [ "KBaseRBTnSeq.Pool" ],
+                "is_output_name": true
             }
 	}
     ],    
