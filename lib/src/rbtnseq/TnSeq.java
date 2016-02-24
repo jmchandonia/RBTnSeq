@@ -936,11 +936,6 @@ public class TnSeq {
                                                        mapOutput[0],
                                                        mappedReadsHandle,
                                                        input.getInputBarcodeModel());
-            objects = new ArrayList<WorkspaceObject>();
-            objects.add(new WorkspaceObject()
-                        .withRef(mappedReadsRef)
-                        .withDescription("TnSeq mapped reads"));
-           
             /*
               ObjectMapper mapper = new ObjectMapper();
               File f = new File(tempDir+"/mappedReadsObject.json");
@@ -954,7 +949,11 @@ public class TnSeq {
                                              makeProvenance("TnSeq mapped reads",
                                                             methodName,
                                                             methodParams));
-
+            objects = new ArrayList<WorkspaceObject>();
+            objects.add(new WorkspaceObject()
+                        .withRef(mappedReadsRef)
+                        .withDescription("TnSeq mapped reads"));
+           
             reportText += "---\nStep 1: Read mapping output:\n";
             List<String> lines = Files.readAllLines(Paths.get(mapOutput[1].getPath()), Charset.defaultCharset());
             for (String line : lines) {
