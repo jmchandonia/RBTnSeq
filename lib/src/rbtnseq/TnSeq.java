@@ -1020,6 +1020,11 @@ public class TnSeq {
             reportText += "\n\nERROR: "+e.getMessage();
             warnings = new ArrayList<String>();
             warnings.add("ERROR: "+e.getMessage());
+
+            // must have at least one object to return report;
+            // if we have none, just throw the error again
+            if (objects==null)
+                throw e;
         }
 
         // generate report with list of objects created
