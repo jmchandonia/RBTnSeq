@@ -173,8 +173,7 @@ public class TnSeq {
                     continue;
                 Tuple4<String, Long, String, Long> loc = feat.getLocation().get(0);
                 String contigID = loc.getE1();
-                String featID = feat.getId();
-                if ((contigID==null) || (featID==null))
+                if (contigID==null)
                     continue;
 
                 // get other info about gene
@@ -210,10 +209,15 @@ public class TnSeq {
                 // confusing Morgan's code.
                 desc = desc.replaceAll("\"|\'", "");
 
-                // only list features with sequence
-                String seq = feat.getDnaSequence();
-                if ((seq==null) || (seq.length()==0))
+                /*
+                  don't do this; since some features in
+                  KBase sample genomes inexplicably have no sequence!
+
+                  // only list features with sequence
+                  String seq = feat.getDnaSequence();
+                  if ((seq==null) || (seq.length()==0))
                     continue;
+                */
 
                 // we have a called gene
                 geneCount++;
@@ -229,7 +233,7 @@ public class TnSeq {
                                 .withE5(alias));
 
                 // see if feature is a protein.  If so, add to aaseq.
-                seq = feat.getProteinTranslation();
+                String seq = feat.getProteinTranslation();
                 if ((seq == null) || (seq.isEmpty()))
                     continue;
                 if (fw != null)
