@@ -6,7 +6,7 @@ tooltip: |
   Runs TnSeq processing, mapping barcode reads to a genome and creating a mutant library (pool) to use in BarSeq experiments
 screenshots: []
 
-icon: icon.png
+icon: tnseq-yellow.png
 
 #
 # define a set of similar methods that might be useful to the user

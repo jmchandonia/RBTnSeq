@@ -6,7 +6,7 @@ tooltip: |
   Gets a list of essential genes (those not hit by any transposons) from a TnSeq experiment
 screenshots: []
 
-icon: icon.png
+icon: tnseq-yellow.png
 
 #
 # define a set of similar methods that might be useful to the user

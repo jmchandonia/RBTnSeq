@@ -6,7 +6,7 @@ tooltip: |
   After barcode reads are mapped to a genome, this method creates a mutant library (pool) to use in BarSeq experiments
 screenshots: []
 
-icon: icon.png
+icon: tnseq-yellow.png
 
 #
 # define a set of similar methods that might be useful to the user
