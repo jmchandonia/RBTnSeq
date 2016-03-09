@@ -854,12 +854,9 @@ public class TnSeq {
 
         // generate report with list of objects created
         List<WorkspaceObject> objects = new ArrayList<WorkspaceObject>();
-        /*
-          test what happens with an empty "objects" list.
         objects.add(new WorkspaceObject()
                     .withRef(poolRef)
                     .withDescription("TnSeq library pool"));
-        */
         String[] report = makeReport(wc,
                                      input.getWs(),
                                      reportText,
