@@ -901,7 +901,7 @@ public class TnSeq {
         String mappedReadsRef = null;
         String poolRef = null;
         List<String> warnings = null;
-        List<WorkspaceObject> objects = null;        
+        List<WorkspaceObject> objects = new ArrayList<WorkspaceObject>();
 
         try {
             // dump reads
@@ -954,7 +954,6 @@ public class TnSeq {
                                              makeProvenance("TnSeq mapped reads",
                                                             methodName,
                                                             methodParams));
-            objects = new ArrayList<WorkspaceObject>();
             objects.add(new WorkspaceObject()
                         .withRef(mappedReadsRef)
                         .withDescription("TnSeq mapped reads"));
@@ -1028,11 +1027,6 @@ public class TnSeq {
             reportText += "\n\nERROR: "+e.getMessage();
             warnings = new ArrayList<String>();
             warnings.add("ERROR: "+e.getMessage());
-
-            // must have at least one object to return report;
-            // if we have none, just throw the error again
-            if (objects==null)
-                throw e;
         }
 
         // generate report with list of objects created
