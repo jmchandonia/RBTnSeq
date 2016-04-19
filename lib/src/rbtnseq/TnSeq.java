@@ -155,15 +155,17 @@ public class TnSeq {
                     alias = aliases.get(0);
                 Integer contigNum = contigMap.get(contigID);
                 int type = 0;
-                String featType = feat.getType();
+                String featType = feat.getType().toUpperCase();
                 if (featType != null) {
                     if (featType.equals("CDS"))
                         type = 1;
-                    else if (featType.equals("rna"))
+                    else if (featType.equals("RNA"))
                         type = 5;
                 }
-                if (type==0)
-                    throw new Exception("Unknown feature type "+featType);
+                if (type==0) {
+                    System.out.println("Warning: unknown feature type "+featType);
+                    continue;
+                }
 
                 Long begin = loc.getE2();
                 Long length = loc.getE4();
