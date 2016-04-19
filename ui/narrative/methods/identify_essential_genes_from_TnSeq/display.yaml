@@ -1,0 +1,43 @@
+#
+# define display information
+#
+name: Identify Essential Genes from TnSeq
+tooltip: |
+  Identifies essential genes (those not hit by any transposons) from a TnSeq experiment
+screenshots: []
+
+icon: tnseq-yellow.png
+
+#
+# define a set of similar methods that might be useful to the user
+#
+suggestions:
+  apps:
+    related:
+      []
+    next:
+      []
+  methods:
+    related:
+      [analyze_TnSeq_reads]
+    next:
+      []
+
+parameters:
+  input_pool :
+    ui-name : |
+      Input Pool
+    short-hint : |
+      Pool object created by the "Analyze TnSeq Reads" method
+    long-hint  : |
+      This method will find essential genes in a Pool (i.e, TnSeq library) object
+  output_feature_set :
+    ui-name : |
+      Output FeatureSet
+    short-hint : |
+      FeatureSet object created by this method
+    long-hint  : |
+      This method will identify essential genes in a Pool (i.e, TnSeq library) object, and put them in your workspace as a FeatureSet object
+
+description : |
+  <p>This method uses Morgan Price's FEBA pipeline to identify essential genes in a genome, based on by finding genes that were not hit by transposons in a TnSeq experiment</p>

@@ -171,11 +171,25 @@ class RBTnSeq(object):
             raise ServerError('Unknown', 0, 'An unknown server error occurred')
         return resp['result']
  
-    def runTnSeq(self, input_params, json_rpc_context = None):
+    def runTnSeq(self, input, json_rpc_context = None):
         if json_rpc_context and type(json_rpc_context) is not dict:
             raise ValueError('Method runTnSeq: argument json_rpc_context is not type dict as required.')
         resp = self._call('RBTnSeq.runTnSeq',
-                          [input_params], json_rpc_context)
+                          [input], json_rpc_context)
+        return resp[0]
+  
+    def makeTnSeqPool(self, input, json_rpc_context = None):
+        if json_rpc_context and type(json_rpc_context) is not dict:
+            raise ValueError('Method makeTnSeqPool: argument json_rpc_context is not type dict as required.')
+        resp = self._call('RBTnSeq.makeTnSeqPool',
+                          [input], json_rpc_context)
+        return resp[0]
+  
+    def getEssentialGenes(self, input, json_rpc_context = None):
+        if json_rpc_context and type(json_rpc_context) is not dict:
+            raise ValueError('Method getEssentialGenes: argument json_rpc_context is not type dict as required.')
+        resp = self._call('RBTnSeq.getEssentialGenes',
+                          [input], json_rpc_context)
         return resp[0]
   
     def version(self, json_rpc_context = None):

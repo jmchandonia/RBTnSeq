@@ -14,6 +14,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import rbtnseq.*;
+import us.kbase.kbaserbtnseq.*;
 import us.kbase.auth.AuthToken;
 import us.kbase.common.service.JsonServerSyslog;
 import us.kbase.common.service.UObject;
@@ -80,23 +81,70 @@ public class RBTnSeqServerTest {
 
     /**
        test tnseq with some D. vulgaris reads data
-    */
     @Test
+    */
     public void testTnSeq() throws Exception {
         TnSeqInput input = new TnSeqInput()
-            .withWs("3262")
+            .withWs("jmc:1449699355207")
             .withInputReadLibrary("GBVT06H_reads")
             .withInputGenome("kb|g.3562")
-            .withSequencedAt("cornerstone.qb3.berkeley.edu")
-            .withStartDate("2015-04-21")
-            .withOutputPool("test_pool")
-            .withOutputTnseqExperiment("test_experiment")
-            .withOutputTnseqLibrary("test_library");
-        String rv = impl.runTnSeq(input, token, (RpcContext)null);
-        System.out.println("tnseq test returned "+rv);
+            .withInputBarcodeModel("model_pKMW7")
+            .withInputMinN(10L)
+            .withOutputMappedReads("test_mapped_reads")
+            .withOutputPool("test_pool");
+        TnSeqOutput rv = impl.runTnSeq(input, token, (RpcContext)null);
         Assert.assertNotNull(rv);
+        System.out.println("tnseq report "+rv.getReportRef());
     }
 
+    /**
+       test tnseq with some reads that aren't really barcode reads
+    @Test
+    */
+    public void testBadTnSeq() throws Exception {
+        TnSeqInput input = new TnSeqInput()
+            .withWs("jmc:1449699355207")
+            .withInputReadLibrary("rhodo.art.q50.SE.reads")
+            .withInputGenome("Rhodobacter_CACIA_14H1")
+            .withInputBarcodeModel("model_pKMW7")
+            .withInputMinN(10L)
+            .withOutputMappedReads("test_rhodo_reads")
+            .withOutputPool("test_rhodo_pool");
+        TnSeqOutput rv = impl.runTnSeq(input, token, (RpcContext)null);
+        Assert.assertNotNull(rv);
+        System.out.println("tnseq report "+rv.getReportRef());
+    }
+
+    
+
+    /**
+       test loading of MappedReads object
+    @Test
+    public void testParseMappedReads() throws Exception {
+        MappedReads reads = TnSeq.parseMappedReads(2,
+                                                   null,
+                                                   null,
+                                                   new File("/kb/module/work/map6575757982934881151.tab"),
+                                                   "model_pKMW7");
+        Assert.assertNotNull(reads);
+        System.out.println("read "+reads.getUniqueReadsByContig().get(0).size()+" mapped unique reads in contig 0 from file");
+    }
+    */
+
+    /**
+       test essential genes
+    @Test
+    */
+    public void testEssentialGenes() throws Exception {
+        EssentialGenesInput input = new EssentialGenesInput()
+            .withWs("jmc:1449699355207")
+            .withInputPool("test_pool")
+            .withOutputFeatureSet("test_feature_set");
+        EssentialGenesOutput rv = impl.getEssentialGenes(input, token, (RpcContext)null);
+        Assert.assertNotNull(rv);
+        System.out.println("essential genes report "+rv.getReportRef());
+    }
+    
     /*    
     @Test
     public void testCountContigs() throws Exception {

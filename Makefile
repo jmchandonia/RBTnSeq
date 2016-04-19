@@ -19,6 +19,19 @@ ANT = $(KB_RUNTIME)/ant/bin/ant
 
 default: compile build-startup-script build-executable-script build-test-script
 
+compile-java-typespec-data:
+	cp ../../rbtn_seq/KBaseRBTnSeq.spec spec/spec/
+	gen_java_types -S spec/spec/KBaseRBTnSeq.spec -s lib/src/
+	gen_java_types -S spec/spec/KBaseAssembly.spec -s lib/src/
+	gen_java_types -S spec/spec/KBaseReport.spec -s lib/src/
+	gen_java_types -S spec/spec/KBaseCollections.spec -s lib/src/
+	rm lib/src/us/kbase/kbaserbtnseq/KBaseRBTnSeqClient.java
+	rm lib/src/us/kbase/kbaserbtnseq/KBaseRBTnSeqServer.java
+	rm lib/src/us/kbase/kbasecollections/KBaseCollectionsClient.java
+	rm lib/src/us/kbase/kbasecollections/KBaseCollectionsServer.java
+	rm lib/src/us/kbase/kbasereport/KBaseReportClient.java
+	rm lib/src/us/kbase/kbasereport/KBaseReportServer.java
+
 compile:
 	kb-sdk compile $(SPEC_FILE) \
 		--out $(LIB_DIR) \
@@ -60,4 +73,3 @@ test:
 
 clean:
 	rm -rfv $(LBIN_DIR)
-	
