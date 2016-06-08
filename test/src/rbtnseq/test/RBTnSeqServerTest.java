@@ -14,15 +14,12 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import rbtnseq.*;
+import us.kbase.kbasereport.*;
 import us.kbase.kbaserbtnseq.*;
 import us.kbase.auth.AuthToken;
 import us.kbase.common.service.JsonServerSyslog;
 import us.kbase.common.service.UObject;
-import us.kbase.workspace.CreateWorkspaceParams;
-import us.kbase.workspace.ObjectSaveData;
-import us.kbase.workspace.SaveObjectsParams;
-import us.kbase.workspace.WorkspaceClient;
-import us.kbase.workspace.WorkspaceIdentity;
+import us.kbase.workspace.*;
 
 import us.kbase.common.service.RpcContext;
 
@@ -81,20 +78,24 @@ public class RBTnSeqServerTest {
 
     /**
        test tnseq with some D. vulgaris reads data
-    @Test
     */
+    @Test
     public void testTnSeq() throws Exception {
         TnSeqInput input = new TnSeqInput()
-            .withWs("jmc:1449699355207")
-            .withInputReadLibrary("GBVT06H_reads")
-            .withInputGenome("kb|g.3562")
+            .withWs("jmc:1458758659320")
+            .withInputReadLibrary("GBVT07A")
+            .withInputGenome("DvH")
             .withInputBarcodeModel("model_pKMW7")
             .withInputMinN(10L)
             .withOutputMappedReads("test_mapped_reads")
             .withOutputPool("test_pool");
         TnSeqOutput rv = impl.runTnSeq(input, token, (RpcContext)null);
         Assert.assertNotNull(rv);
-        System.out.println("tnseq report "+rv.getReportRef());
+        String reportRef = rv.getReportRef();
+        Assert.assertNotNull(reportRef);
+        Report report = wsClient.getObjects(Arrays.asList(new ObjectIdentity().withRef(reportRef))).get(0).getData().asClassInstance(us.kbase.kbasereport.Report.class);
+        Assert.assertNotNull(report);
+        System.out.println(report.getTextMessage());        
     }
 
     /**
