@@ -706,15 +706,14 @@ public class TnSeq {
                                  AuthToken token,
                                  File f,
                                  boolean gzip) throws Exception {
-        String url = h.getUrl()+"/node/"+h.getId()+"?download";
+        BasicShockClient shockClient = new BasicShockClient(new URL(h.getUrl()), token);
+        ShockNode sn = shockClient.getNode(new ShockNodeId(h.getId()));
+        OutputStream os = new FileOutputStream(f);
+        if (gzip)
+            os = new GZIPOutputStream(os);
 
-        // needs authenticated shock download
-        ProcessBuilder pb =
-            new ProcessBuilder("/bin/bash",
-                               "-c",
-                               "/usr/bin/curl -k -X GET "+url+" -H \"Authorization: OAuth "+token.toString()+"\""+(gzip ? "| /bin/gzip" : ""));
-        pb.redirectOutput(Redirect.to(f));
-        pb.start().waitFor();
+        shockClient.getFile(sn,os);
+
         if (f.length()==0)
             f.delete();
 
