@@ -714,6 +714,8 @@ public class TnSeq {
             os = new GZIPOutputStream(os);
 
         shockClient.getFile(sn,os);
+        os.flush();
+        os.close();
 
         if (f.length()==0)
             f.delete();
