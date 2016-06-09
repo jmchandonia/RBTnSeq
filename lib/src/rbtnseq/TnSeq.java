@@ -811,6 +811,7 @@ public class TnSeq {
                                              new File(genomeDir+"/genes.tab"),
                                              input.getInputMinN().longValue());
         mappedReadsFile.delete();
+        IO.rmRF(genomeDir);
 
         Handle poolHandle = toShock(shockURL, token, poolOutput[0]);
 
@@ -932,7 +933,7 @@ public class TnSeq {
             if (mapOutput[0].length()==0) {
                 mapOutput[0].delete();
                 mapOutput[1].delete();
-                throw new Exception("Error mapping reads; are you sure you picked the correct barcode model?");
+                throw new Exception("Error mapping reads; are you sure you picked the correct genome and barcode model?");
             }
 
             readsFile.delete();
@@ -977,6 +978,7 @@ public class TnSeq {
                                                  new File(genomeDir+"/genes.tab"),
                                                  input.getInputMinN().longValue());
             mapOutput[0].delete();
+            IO.rmRF(genomeDir);
 
             Handle poolHandle = toShock(shockURL, token, poolOutput[0]);
 
