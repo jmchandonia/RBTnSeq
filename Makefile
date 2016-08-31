@@ -17,7 +17,9 @@ ANT = $(KB_RUNTIME)/ant/bin/ant
 
 .PHONY: test
 
-default: compile build-startup-script build-executable-script build-test-script
+default: compile
+
+all: compile build build-startup-script build-executable-script build-test-script
 
 compile-java-typespec-data:
 	cp ../../rbtn_seq/KBaseRBTnSeq.spec spec/spec/
@@ -42,6 +44,10 @@ compile:
 		--java \
 		--javasrv \
 		--javapackage .;
+	$(ANT) war -Djars.dir=$(JARS_DIR)
+	chmod +x $(SCRIPTS_DIR)/entrypoint.sh
+
+build:
 	$(ANT) war -Djars.dir=$(JARS_DIR)
 	chmod +x $(SCRIPTS_DIR)/entrypoint.sh
 
